@@ -6,6 +6,7 @@ import { join } from 'path';
 import { DatabaseModule } from './infrastructure/database/database.module';
 import { OpenAiModule } from './infrastructure/openai/openai.module';
 import { NotionModule } from './infrastructure/notion/notion.module';
+import { RagModule } from './domains/rag/rag.module';
 
 @Module({
   imports: [
@@ -25,6 +26,9 @@ import { NotionModule } from './infrastructure/notion/notion.module';
     DatabaseModule,
     OpenAiModule,
     NotionModule,
+
+    // Domains
+    RagModule,
   ],
 })
 export class AppModule {}
