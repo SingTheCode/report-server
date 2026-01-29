@@ -12,5 +12,6 @@ import { RagModule } from '../rag/rag.module';
   imports: [TypeOrmModule.forFeature([Worklog]), NotionModule, RagModule],
   controllers: [WorklogController],
   providers: [WorklogResolver, WorklogService, WorklogRepository],
+  exports: [WorklogRepository],
 })
 export class WorklogModule {}

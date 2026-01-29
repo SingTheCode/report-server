@@ -93,4 +93,39 @@ describe('WorklogRepository', () => {
       expect(result).toEqual({ totalWorklogs: 10 });
     });
   });
+
+  describe('findByIds', () => {
+    // Given: 여러 worklog ID가 주어졌을 때
+    // When: findByIds를 호출하면
+    // Then: 해당 ID의 worklog들을 반환한다
+    test('ID 목록으로 worklog를 조회한다', async () => {
+      // Given
+      const worklogs = [
+        { id: 'page1', title: 'Test1', content: 'content1' },
+        { id: 'page2', title: 'Test2', content: 'content2' },
+      ];
+      (mockRepo.find as jest.Mock).mockResolvedValue(worklogs);
+
+      // When
+      const result = await repository.findByIds(['page1', 'page2']);
+
+      // Then
+      expect(mockRepo.find).toHaveBeenCalledWith({
+        where: { id: expect.anything() },
+      });
+      expect(result).toEqual(worklogs);
+    });
+
+    // Given: 빈 ID 배열이 주어졌을 때
+    // When: findByIds를 호출하면
+    // Then: 빈 배열을 반환한다
+    test('빈 ID 배열이면 빈 배열을 반환한다', async () => {
+      // When
+      const result = await repository.findByIds([]);
+
+      // Then
+      expect(mockRepo.find).not.toHaveBeenCalled();
+      expect(result).toEqual([]);
+    });
+  });
 });

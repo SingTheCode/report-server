@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Worklog } from './entities/worklog.entity';
 
 @Injectable()
@@ -20,6 +20,11 @@ export class WorklogRepository {
 
   async findAll(): Promise<Worklog[]> {
     return this.repo.find();
+  }
+
+  async findByIds(ids: string[]): Promise<Worklog[]> {
+    if (ids.length === 0) return [];
+    return this.repo.find({ where: { id: In(ids) } });
   }
 
   async getStatus() {

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { RagService } from '../rag/rag.service';
-import { SearchResultOutput } from '../rag/dto/output/search-result.output';
+import { WorklogRepository } from '../worklog/worklog.repository';
 
 export interface Tool {
   name: string;
@@ -13,9 +13,27 @@ interface SearchWorklogArgs {
   limit?: number;
 }
 
+interface McpSearchResultItem {
+  documentId: string;
+  content: string;
+  similarity: number;
+  worklog: {
+    title: string;
+    content: string;
+    url?: string;
+  };
+}
+
+export interface McpSearchResult {
+  results: McpSearchResultItem[];
+}
+
 @Injectable()
 export class McpServer {
-  constructor(private ragService: RagService) {}
+  constructor(
+    private ragService: RagService,
+    private worklogRepo: WorklogRepository,
+  ) {}
 
   getTools(): Tool[] {
     return [
@@ -37,15 +55,49 @@ export class McpServer {
   async handleToolCall(
     toolName: string,
     args: SearchWorklogArgs,
-  ): Promise<SearchResultOutput> {
+  ): Promise<McpSearchResult> {
     switch (toolName) {
       case 'search_worklog':
-        return this.ragService.search({
-          query: args.query,
-          limit: args.limit ?? 5,
-        });
+        return this.searchWorklog(args);
       default:
         throw new Error(`Unknown tool: ${toolName}`);
     }
+  }
+
+  private async searchWorklog(args: SearchWorklogArgs): Promise<McpSearchResult> {
+    const ragResult = await this.ragService.search({
+      query: args.query,
+      limit: args.limit ?? 5,
+    });
+
+    // 동일 documentId 중 유사도가 가장 높은 결과만 유지
+    const bestByDocId = new Map<string, (typeof ragResult.results)[0]>();
+    for (const r of ragResult.results) {
+      const existing = bestByDocId.get(r.documentId);
+      if (!existing || r.similarity > existing.similarity) {
+        bestByDocId.set(r.documentId, r);
+      }
+    }
+    const dedupedResults = [...bestByDocId.values()];
+
+    const documentIds = dedupedResults.map((r) => r.documentId);
+    const worklogs = await this.worklogRepo.findByIds(documentIds);
+    const worklogMap = new Map(worklogs.map((w) => [w.id, w]));
+
+    const results = dedupedResults.map((r) => {
+      const worklog = worklogMap.get(r.documentId);
+      return {
+        documentId: r.documentId,
+        content: r.content,
+        similarity: r.similarity,
+        worklog: {
+          title: worklog?.title ?? '',
+          content: worklog?.content ?? '',
+          url: worklog?.url,
+        },
+      };
+    });
+
+    return { results };
   }
 }
