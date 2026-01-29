@@ -110,7 +110,4 @@ export class RagService {
     return out;
   }
 
-  getStatus() {
-    return this.ragRepo.getStatus();
-  }
 }
