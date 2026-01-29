@@ -26,7 +26,10 @@ describe('Worklog Sync (e2e)', () => {
       },
     ]),
     fetchBlockChildrenAll: jest.fn().mockResolvedValue([
-      { type: 'paragraph', paragraph: { rich_text: [{ plain_text: 'Page content' }] } },
+      {
+        type: 'paragraph',
+        paragraph: { rich_text: [{ plain_text: 'Page content' }] },
+      },
     ]),
   };
 
@@ -54,7 +57,9 @@ describe('Worklog Sync (e2e)', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    app.useGlobalPipes(
+      new ValidationPipe({ whitelist: true, transform: true }),
+    );
     await app.init();
   });
 

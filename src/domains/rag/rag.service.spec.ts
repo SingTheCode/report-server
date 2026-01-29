@@ -20,9 +20,11 @@ describe('RagService', () => {
     mockOpenAi = {
       countTokens: jest.fn().mockReturnValue(10),
       embedText: jest.fn().mockResolvedValue([0.1, 0.2, 0.3]),
-      embedBatchSafe: jest.fn().mockImplementation((chunks: string[]) =>
-        Promise.resolve(chunks.map(() => [0.1, 0.2, 0.3])),
-      ),
+      embedBatchSafe: jest
+        .fn()
+        .mockImplementation((chunks: string[]) =>
+          Promise.resolve(chunks.map(() => [0.1, 0.2, 0.3])),
+        ),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -43,7 +45,9 @@ describe('RagService', () => {
     test('문서를 임베딩으로 변환하여 저장한다', async () => {
       // Given
       const input = {
-        documents: [{ id: 'doc1', content: 'test content' }],
+        documents: [
+          { id: 'doc1', content: 'test content', title: 'test title' },
+        ],
       };
 
       // When
@@ -65,8 +69,8 @@ describe('RagService', () => {
       // Given
       const input = {
         documents: [
-          { id: 'doc1', content: 'content 1' },
-          { id: 'doc2', content: 'content 2' },
+          { id: 'doc1', content: 'content 1', title: 'test content' },
+          { id: 'doc2', content: 'content 2', title: 'test content' },
         ],
       };
 
@@ -89,7 +93,9 @@ describe('RagService', () => {
         { documentId: 'doc1', content: 'content 1', vector: [0.1, 0.2, 0.3] },
         { documentId: 'doc2', content: 'content 2', vector: [0.9, 0.8, 0.7] },
       ];
-      (mockRagRepo.findAllEmbeddings as jest.Mock).mockResolvedValue(embeddings);
+      (mockRagRepo.findAllEmbeddings as jest.Mock).mockResolvedValue(
+        embeddings,
+      );
 
       // When
       const result = await service.search({ query: 'test query', limit: 5 });
@@ -108,7 +114,9 @@ describe('RagService', () => {
       const embeddings = [
         { documentId: 'doc1', content: 'content', vector: [0.1, 0.2, 0.3] },
       ];
-      (mockRagRepo.findAllEmbeddings as jest.Mock).mockResolvedValue(embeddings);
+      (mockRagRepo.findAllEmbeddings as jest.Mock).mockResolvedValue(
+        embeddings,
+      );
 
       // When
       await service.search({ query: 'cached query', limit: 5 });

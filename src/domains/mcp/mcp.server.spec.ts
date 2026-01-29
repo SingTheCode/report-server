@@ -20,10 +20,7 @@ describe('McpServer', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        McpServer,
-        { provide: RagService, useValue: mockRagService },
-      ],
+      providers: [McpServer, { provide: RagService, useValue: mockRagService }],
     }).compile();
 
     mcpServer = module.get<McpServer>(McpServer);

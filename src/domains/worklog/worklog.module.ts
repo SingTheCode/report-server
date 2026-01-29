@@ -8,11 +8,7 @@ import { NotionModule } from '../../infrastructure/notion/notion.module';
 import { RagModule } from '../rag/rag.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Worklog]),
-    NotionModule,
-    RagModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Worklog]), NotionModule, RagModule],
   providers: [WorklogResolver, WorklogService, WorklogRepository],
 })
 export class WorklogModule {}

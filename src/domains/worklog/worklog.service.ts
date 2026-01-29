@@ -47,10 +47,12 @@ export class WorklogService {
     const documents = worklogs.map((w) => ({
       id: w.id,
       content: `${w.title}\n\n${w.content}`,
-      metadata: JSON.stringify({ title: w.title, url: w.url }),
+      title: JSON.stringify({ title: w.title, url: w.url }),
     }));
 
-    const embeddingResult = await this.ragService.buildEmbeddings({ documents });
+    const embeddingResult = await this.ragService.buildEmbeddings({
+      documents,
+    });
 
     return {
       success: true,

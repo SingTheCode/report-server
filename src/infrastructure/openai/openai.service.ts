@@ -47,7 +47,9 @@ export class OpenAiService {
 
   async embedText(text: string): Promise<number[]> {
     if (this.countTokens(text) > this.MAX_TOKENS) {
-      throw new Error(`Embedding input too large (> ${this.MAX_TOKENS} tokens)`);
+      throw new Error(
+        `Embedding input too large (> ${this.MAX_TOKENS} tokens)`,
+      );
     }
 
     const res = await this.withRetry(() =>
@@ -63,7 +65,9 @@ export class OpenAiService {
 
     for (const t of texts) {
       if (this.countTokens(t) > this.MAX_TOKENS) {
-        throw new Error(`One of inputs too large (> ${this.MAX_TOKENS} tokens)`);
+        throw new Error(
+          `One of inputs too large (> ${this.MAX_TOKENS} tokens)`,
+        );
       }
     }
 

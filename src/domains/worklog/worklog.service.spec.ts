@@ -58,11 +58,18 @@ describe('WorklogService', () => {
         },
       ];
       const mockBlocks = [
-        { type: 'paragraph', paragraph: { rich_text: [{ plain_text: 'Content' }] } },
+        {
+          type: 'paragraph',
+          paragraph: { rich_text: [{ plain_text: 'Content' }] },
+        },
       ];
 
-      (mockNotionService.fetchDatabaseAll as jest.Mock).mockResolvedValue(mockPages);
-      (mockNotionService.fetchBlockChildrenAll as jest.Mock).mockResolvedValue(mockBlocks);
+      (mockNotionService.fetchDatabaseAll as jest.Mock).mockResolvedValue(
+        mockPages,
+      );
+      (mockNotionService.fetchBlockChildrenAll as jest.Mock).mockResolvedValue(
+        mockBlocks,
+      );
 
       // When
       const result = await service.syncNotion({
@@ -71,7 +78,10 @@ describe('WorklogService', () => {
       });
 
       // Then
-      expect(mockNotionService.fetchDatabaseAll).toHaveBeenCalledWith('db-id', 'token');
+      expect(mockNotionService.fetchDatabaseAll).toHaveBeenCalledWith(
+        'db-id',
+        'token',
+      );
       expect(mockWorklogRepo.saveWorklogs).toHaveBeenCalled();
       expect(mockRagService.buildEmbeddings).toHaveBeenCalled();
       expect(result.success).toBe(true);
@@ -120,7 +130,9 @@ describe('WorklogService', () => {
     // Then: 상태 정보를 반환한다
     test('상태 정보를 반환한다', async () => {
       // Given
-      (mockWorklogRepo.getStatus as jest.Mock).mockResolvedValue({ totalWorklogs: 5 });
+      (mockWorklogRepo.getStatus as jest.Mock).mockResolvedValue({
+        totalWorklogs: 5,
+      });
 
       // When
       const result = await service.getStatus();

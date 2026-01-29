@@ -39,7 +39,7 @@ describe('RagRepository', () => {
     // Then: docRepo.save가 호출된다
     test('문서를 저장한다', async () => {
       // Given
-      const doc = { id: 'doc1', content: 'test content' };
+      const doc = { id: 'doc1', content: 'test content', title: 'test title' };
 
       // When
       await repository.saveDocument(doc);

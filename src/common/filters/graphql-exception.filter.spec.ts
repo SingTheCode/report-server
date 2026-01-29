@@ -21,7 +21,10 @@ describe('GraphqlExceptionFilter', () => {
     // Then: HTTP 상태는 200이고 원본 예외를 반환한다
     test('HttpException 발생 시 상태 200 유지하고 예외 반환', () => {
       // Given
-      const exception = new HttpException('Bad Request', HttpStatus.BAD_REQUEST);
+      const exception = new HttpException(
+        'Bad Request',
+        HttpStatus.BAD_REQUEST,
+      );
 
       // When
       const result = filter.catch(exception, mockHost);

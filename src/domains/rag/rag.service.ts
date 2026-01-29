@@ -71,7 +71,11 @@ export class RagService {
       this.searchCache.clear();
     }
 
-    return { success: true, documentCount: input.documents.length, chunkCount: totalChunks };
+    return {
+      success: true,
+      documentCount: input.documents.length,
+      chunkCount: totalChunks,
+    };
   }
 
   async search(input: SearchEmbeddingsInput) {
@@ -96,7 +100,7 @@ export class RagService {
       .map((e) => ({
         documentId: e.documentId,
         content: e.content,
-        similarity: this.dot(queryVector!, e.vector),
+        similarity: this.dot(queryVector, e.vector),
       }))
       .sort((a, b) => b.similarity - a.similarity)
       .slice(0, limit);

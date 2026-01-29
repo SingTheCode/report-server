@@ -15,7 +15,7 @@ class DocumentInput {
   @Field({ nullable: true })
   @IsOptional()
   @IsString()
-  metadata?: string;
+  title: string;
 }
 
 @InputType()

@@ -8,10 +8,7 @@ import { Embedding } from './entities/embedding.entity';
 import { OpenAiModule } from '../../infrastructure/openai/openai.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Document, Embedding]),
-    OpenAiModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Document, Embedding]), OpenAiModule],
   providers: [RagResolver, RagService, RagRepository],
   exports: [RagService],
 })

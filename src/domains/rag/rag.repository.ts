@@ -13,7 +13,11 @@ export class RagRepository {
     private embRepo: Repository<Embedding>,
   ) {}
 
-  async saveDocument(doc: { id: string; content: string; metadata?: string }): Promise<void> {
+  async saveDocument(doc: {
+    id: string;
+    content: string;
+    title: string;
+  }): Promise<void> {
     await this.docRepo.save(doc);
   }
 
