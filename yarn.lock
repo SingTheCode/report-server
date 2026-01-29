@@ -1691,7 +1691,7 @@
     "@types/node" "*"
     form-data "^4.0.0"
 
-"@types/supertest@^6.0.2":
+"@types/supertest@^6.0.3":
   version "6.0.3"
   resolved "https://registry.yarnpkg.com/@types/supertest/-/supertest-6.0.3.tgz#d736f0e994b195b63e1c93e80271a2faf927388c"
   integrity sha512-8WzXq62EXFhJ7QsH3Ocb/iKQ/Ty9ZVWnVzoTKc9tyyFRRF3a74Tk2+TLFgaFFw364Ere+npzHKEJ6ga2LzIL7w==
@@ -5413,7 +5413,7 @@ superagent@^10.3.0:
     mime "2.6.0"
     qs "^6.14.1"
 
-supertest@^7.0.0:
+supertest@^7.2.2:
   version "7.2.2"
   resolved "https://registry.yarnpkg.com/supertest/-/supertest-7.2.2.tgz#dac3ee25a2aa59942a7f641e50c838a7c8819204"
   integrity sha512-oK8WG9diS3DlhdUkcFn4tkNIiIbBx9lI2ClF8K+b2/m8Eyv47LSawxUzZQSNKUrVb2KsqeTDCcjAAVPYaSLVTA==

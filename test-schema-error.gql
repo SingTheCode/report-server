@@ -1,0 +1,48 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type BuildEmbeddingsOutput {
+  success: Boolean!
+  documentCount: Int!
+  chunkCount: Int!
+}
+
+type SearchResultItem {
+  documentId: String!
+  content: String!
+  similarity: Float!
+}
+
+type SearchResultOutput {
+  results: [SearchResultItem!]!
+}
+
+type EmbeddingStatusOutput {
+  totalDocuments: Int!
+  totalEmbeddings: Int!
+}
+
+type Query {
+  searchEmbeddings(input: SearchEmbeddingsInput!): SearchResultOutput!
+  embeddingStatus: EmbeddingStatusOutput!
+}
+
+input SearchEmbeddingsInput {
+  query: String!
+  limit: Int = 5
+}
+
+type Mutation {
+  buildEmbeddings(input: BuildEmbeddingsInput!): BuildEmbeddingsOutput!
+}
+
+input BuildEmbeddingsInput {
+  documents: [DocumentInput!]!
+}
+
+input DocumentInput {
+  id: String!
+  content: String!
+  metadata: String
+}

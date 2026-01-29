@@ -1,0 +1,78 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type SyncNotionOutput {
+  success: Boolean!
+  syncedCount: Int!
+  embeddedCount: Int!
+}
+
+type NotionPageOutput {
+  id: String!
+  title: String!
+  url: String
+  syncedAt: DateTime!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type WorklogStatusOutput {
+  totalWorklogs: Int!
+}
+
+type BuildEmbeddingsOutput {
+  success: Boolean!
+  documentCount: Int!
+  chunkCount: Int!
+}
+
+type SearchResultItem {
+  documentId: String!
+  content: String!
+  similarity: Float!
+}
+
+type SearchResultOutput {
+  results: [SearchResultItem!]!
+}
+
+type EmbeddingStatusOutput {
+  totalDocuments: Int!
+  totalEmbeddings: Int!
+}
+
+type Query {
+  worklogs: [NotionPageOutput!]!
+  worklogStatus: WorklogStatusOutput!
+  searchEmbeddings(input: SearchEmbeddingsInput!): SearchResultOutput!
+  embeddingStatus: EmbeddingStatusOutput!
+}
+
+input SearchEmbeddingsInput {
+  query: String!
+  limit: Int = 5
+}
+
+type Mutation {
+  syncNotion(input: SyncNotionInput!): SyncNotionOutput!
+  buildEmbeddings(input: BuildEmbeddingsInput!): BuildEmbeddingsOutput!
+}
+
+input SyncNotionInput {
+  databaseId: String!
+  apiToken: String!
+}
+
+input BuildEmbeddingsInput {
+  documents: [DocumentInput!]!
+}
+
+input DocumentInput {
+  id: String!
+  content: String!
+  metadata: String
+}
