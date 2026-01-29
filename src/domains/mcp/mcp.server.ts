@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { RagService } from '../rag/rag.service';
 import { SearchResultOutput } from '../rag/dto/output/search-result.output';
 
-interface Tool {
+export interface Tool {
   name: string;
   description: string;
   inputSchema: object;
