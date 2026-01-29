@@ -14,7 +14,6 @@ describe('RagService', () => {
       saveEmbeddings: jest.fn(),
       deleteByDocumentId: jest.fn(),
       findAllEmbeddings: jest.fn(),
-      getStatus: jest.fn(),
     };
 
     mockOpenAi = {
@@ -140,22 +139,4 @@ describe('RagService', () => {
     });
   });
 
-  describe('getStatus', () => {
-    // Given: 문서와 임베딩이 저장되어 있을 때
-    // When: getStatus를 호출하면
-    // Then: 상태 정보를 반환한다
-    test('상태 정보를 반환한다', async () => {
-      // Given
-      (mockRagRepo.getStatus as jest.Mock).mockResolvedValue({
-        totalDocuments: 10,
-        totalEmbeddings: 30,
-      });
-
-      // When
-      const result = await service.getStatus();
-
-      // Then
-      expect(result).toEqual({ totalDocuments: 10, totalEmbeddings: 30 });
-    });
-  });
 });
