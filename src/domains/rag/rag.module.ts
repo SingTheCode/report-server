@@ -13,5 +13,6 @@ import { OpenAiModule } from '../../infrastructure/openai/openai.module';
     OpenAiModule,
   ],
   providers: [RagResolver, RagService, RagRepository],
+  exports: [RagService],
 })
 export class RagModule {}
