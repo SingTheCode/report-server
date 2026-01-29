@@ -7,6 +7,12 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger('Bootstrap');
 
+  // CORS 설정
+  app.enableCors({
+    origin: ['http://localhost:3000', 'https://job-clover.vercel.app'],
+    credentials: true,
+  });
+
   // 전역 검증 파이프
   app.useGlobalPipes(
     new ValidationPipe({
