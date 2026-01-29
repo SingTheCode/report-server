@@ -141,4 +141,128 @@ describe('WorklogService', () => {
       expect(result).toEqual({ totalWorklogs: 5 });
     });
   });
+
+  describe('uploadFiles', () => {
+    // Given: 파일이 업로드될 때
+    // When: uploadFiles를 호출하면
+    // Then: 파일을 파싱하고 임베딩을 생성하여 저장한다
+    test('파일을 업로드하고 임베딩을 생성한다', async () => {
+      // Given
+      const mockFile = {
+        filename: 'test.md',
+        content: '# Test Content\nThis is test content.',
+      };
+
+      // When
+      const result = await service.uploadFiles({
+        files: [mockFile],
+      });
+
+      // Then
+      expect(result.successCount).toBe(1);
+      expect(result.failedCount).toBe(0);
+      expect(result.successFiles).toHaveLength(1);
+      expect(result.successFiles[0].filename).toBe('test.md');
+      expect(mockRagService.buildEmbeddings).toHaveBeenCalled();
+      expect(mockWorklogRepo.saveWorklogs).toHaveBeenCalled();
+    });
+
+    // Given: 여러 파일이 업로드될 때
+    // When: uploadFiles를 호출하면
+    // Then: 모든 파일을 처리하고 결과를 반환한다
+    test('여러 파일을 업로드한다', async () => {
+      // Given
+      const files = [
+        { filename: 'file1.md', content: 'Content 1' },
+        { filename: 'file2.md', content: 'Content 2' },
+      ];
+
+      // When
+      const result = await service.uploadFiles({ files });
+
+      // Then
+      expect(result.successCount).toBe(2);
+      expect(result.failedCount).toBe(0);
+      expect(result.successFiles).toHaveLength(2);
+    });
+
+    // Given: 파일 처리 중 에러가 발생할 때
+    // When: uploadFiles를 호출하면
+    // Then: 실패한 파일 정보를 반환한다
+    test('실패한 파일 정보를 반환한다', async () => {
+      // Given
+      const mockFile = {
+        filename: 'error.md',
+        content: 'Content',
+      };
+
+      (mockRagService.buildEmbeddings as jest.Mock).mockRejectedValueOnce(
+        new Error('Embedding failed'),
+      );
+
+      // When
+      const result = await service.uploadFiles({
+        files: [mockFile],
+      });
+
+      // Then
+      expect(result.successCount).toBe(0);
+      expect(result.failedCount).toBe(1);
+      expect(result.failedFiles).toHaveLength(1);
+      expect(result.failedFiles[0].filename).toBe('error.md');
+      expect(result.failedFiles[0].error).toBe('Embedding failed');
+    });
+
+    // Given: 진행현황 콜백이 제공될 때
+    // When: uploadFiles를 호출하면
+    // Then: 각 파일 처리 시 진행현황을 전송한다
+    test('진행현황을 콜백으로 전송한다', async () => {
+      // Given
+      const mockFile = {
+        filename: 'test.md',
+        content: 'Content',
+      };
+
+      const progressCallback = jest.fn();
+
+      // When
+      await service.uploadFiles({ files: [mockFile] }, progressCallback);
+
+      // Then
+      expect(progressCallback).toHaveBeenCalled();
+      const lastCall = progressCallback.mock.calls.at(-1)[0];
+      expect(lastCall.status).toBe('completed');
+      expect(lastCall.progress).toBe(1);
+    });
+  });
+
+  describe('getProgressStream', () => {
+    // Given: 업로드 ID로 스트림이 등록되어 있을 때
+    // When: getProgressStream을 호출하면
+    // Then: Observable 스트림을 반환한다
+    test('등록된 스트림을 반환한다', () => {
+      // Given
+      const uploadId = service.createProgressStream();
+
+      // When
+      const stream = service.getProgressStream(uploadId);
+
+      // Then
+      expect(stream).toBeDefined();
+      expect(stream.subscribe).toBeDefined();
+    });
+
+    // Given: 존재하지 않는 업로드 ID일 때
+    // When: getProgressStream을 호출하면
+    // Then: 에러를 던진다
+    test('존재하지 않는 ID는 에러를 던진다', () => {
+      // Given
+      const uploadId = 'non-existent-id';
+
+      // When & Then
+      expect(() => service.getProgressStream(uploadId)).toThrow(
+        'Upload not found',
+      );
+    });
+  });
 });
