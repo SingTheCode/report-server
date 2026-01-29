@@ -7,9 +7,9 @@ import { RagService } from '../rag/rag.service';
 import { SyncNotionInput } from './dto/input/sync-notion.input';
 import { UploadWorklogsInput } from './dto/input/upload-worklogs.input';
 import {
-  UploadWorklogsOutput,
   UploadedFileInfo,
   UploadProgressOutput,
+  UploadResultOutput,
 } from './dto/output/upload-worklogs.output';
 
 @Injectable()
@@ -53,7 +53,6 @@ export class WorklogService {
 
     await this.worklogRepo.saveWorklogs(worklogs);
 
-    // RAG 임베딩 생성
     const documents = worklogs.map((w) => ({
       id: w.id,
       content: `${w.title}\n\n${w.content}`,
@@ -104,7 +103,7 @@ export class WorklogService {
   async uploadFiles(
     input: UploadWorklogsInput,
     onProgress?: (progress: UploadProgressOutput) => void,
-  ): Promise<Omit<UploadWorklogsOutput, 'uploadId'>> {
+  ): Promise<UploadResultOutput> {
     const files = input.files;
     const totalFiles = files.length;
     const successFiles: UploadedFileInfo[] = [];
@@ -154,14 +153,6 @@ export class WorklogService {
         });
       }
     }
-
-    onProgress?.({
-      totalFiles,
-      processedFiles: totalFiles,
-      progress: 1,
-      currentFile: '',
-      status: 'completed',
-    });
 
     return {
       successCount: successFiles.length,

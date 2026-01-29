@@ -10,6 +10,21 @@ export class UploadedFileInfo {
 }
 
 @ObjectType()
+export class UploadResultOutput {
+  @Field(() => Int)
+  successCount: number;
+
+  @Field(() => Int)
+  failedCount: number;
+
+  @Field(() => [UploadedFileInfo])
+  successFiles: UploadedFileInfo[];
+
+  @Field(() => [UploadedFileInfo])
+  failedFiles: UploadedFileInfo[];
+}
+
+@ObjectType()
 export class UploadProgressOutput {
   @Field(() => Int)
   totalFiles: number;
@@ -25,22 +40,13 @@ export class UploadProgressOutput {
 
   @Field()
   status: string;
+
+  @Field(() => UploadResultOutput, { nullable: true })
+  result?: UploadResultOutput;
 }
 
 @ObjectType()
 export class UploadWorklogsOutput {
   @Field()
   uploadId: string;
-
-  @Field(() => Int)
-  successCount: number;
-
-  @Field(() => Int)
-  failedCount: number;
-
-  @Field(() => [UploadedFileInfo])
-  successFiles: UploadedFileInfo[];
-
-  @Field(() => [UploadedFileInfo])
-  failedFiles: UploadedFileInfo[];
 }

@@ -26,9 +26,19 @@ export class WorklogResolver {
       this.worklogService.emitProgress(uploadId, progress);
     };
 
-    const result = await this.worklogService.uploadFiles(input, onProgress);
+    // 비동기로 처리 (await 하지 않음)
+    this.worklogService.uploadFiles(input, onProgress).then((result) => {
+      this.worklogService.emitProgress(uploadId, {
+        totalFiles: result.successCount + result.failedCount,
+        processedFiles: result.successCount + result.failedCount,
+        progress: 1,
+        currentFile: '',
+        status: 'completed',
+        result,
+      });
+    });
 
-    return { uploadId, ...result };
+    return { uploadId };
   }
 
   @Query(() => [NotionPageOutput])

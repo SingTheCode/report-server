@@ -230,9 +230,10 @@ describe('WorklogService', () => {
 
       // Then
       expect(progressCallback).toHaveBeenCalled();
-      const lastCall = progressCallback.mock.calls.at(-1)[0];
-      expect(lastCall.status).toBe('completed');
-      expect(lastCall.progress).toBe(1);
+      // processing, embedding 상태가 호출됨
+      const calls = progressCallback.mock.calls.map((c) => c[0].status);
+      expect(calls).toContain('processing');
+      expect(calls).toContain('embedding');
     });
   });
 

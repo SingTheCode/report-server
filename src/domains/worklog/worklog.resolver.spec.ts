@@ -29,8 +29,8 @@ describe('WorklogResolver', () => {
   describe('uploadWorklogs', () => {
     // Given: 파일이 업로드될 때
     // When: uploadWorklogs mutation을 호출하면
-    // Then: 업로드 결과와 uploadId를 반환한다
-    test('파일을 업로드하고 결과를 반환한다', async () => {
+    // Then: uploadId만 반환하고 처리는 비동기로 진행된다
+    test('uploadId만 반환하고 처리는 비동기로 진행된다', async () => {
       // Given
       const mockInput = { files: [] };
       const mockResult = {
@@ -52,16 +52,14 @@ describe('WorklogResolver', () => {
 
       // Then
       expect(result.uploadId).toBe('upload-123');
-      expect(result.successCount).toBe(2);
-      expect(result.failedCount).toBe(0);
+      expect(result).toEqual({ uploadId: 'upload-123' });
       expect(mockWorklogService.createProgressStream).toHaveBeenCalled();
-      expect(mockWorklogService.uploadFiles).toHaveBeenCalled();
     });
 
-    // Given: 업로드 중 에러가 발생할 때
-    // When: uploadWorklogs mutation을 호출하면
-    // Then: 실패한 파일 정보를 포함한 결과를 반환한다
-    test('실패한 파일 정보를 포함한 결과를 반환한다', async () => {
+    // Given: 업로드 완료 시
+    // When: 비동기 처리가 완료되면
+    // Then: emitProgress로 결과를 전송한다
+    test('비동기 처리 완료 시 emitProgress로 결과를 전송한다', async () => {
       // Given
       const mockInput = { files: [] };
       const mockResult = {
@@ -79,12 +77,19 @@ describe('WorklogResolver', () => {
       );
 
       // When
-      const result = await resolver.uploadWorklogs(mockInput);
+      await resolver.uploadWorklogs(mockInput);
+
+      // 비동기 처리 완료 대기
+      await new Promise((resolve) => setTimeout(resolve, 10));
 
       // Then
-      expect(result.successCount).toBe(1);
-      expect(result.failedCount).toBe(1);
-      expect(result.failedFiles[0].error).toBe('Parse error');
+      expect(mockWorklogService.emitProgress).toHaveBeenCalledWith(
+        'upload-456',
+        expect.objectContaining({
+          status: 'completed',
+          result: mockResult,
+        }),
+      );
     });
   });
 });
