@@ -31,10 +31,12 @@ export class OpenAiService {
     while (true) {
       try {
         return await fn();
-      } catch (e: any) {
+      } catch (e: unknown) {
         attempt++;
-        const status = e?.status || e?.response?.status;
-        const retryable = status === 429 || (status >= 500 && status < 600);
+        const err = e as { status?: number; response?: { status?: number } };
+        const status = err?.status ?? err?.response?.status;
+        const retryable =
+          status === 429 || (status && status >= 500 && status < 600);
 
         if (!retryable || attempt > maxRetry) throw e;
 

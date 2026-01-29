@@ -138,5 +138,4 @@ describe('RagService', () => {
       ).rejects.toThrow(/too large/i);
     });
   });
-
 });

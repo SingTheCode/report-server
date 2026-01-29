@@ -10,18 +10,18 @@ export class MockOpenAiService {
     return text.split(/\s+/).length;
   }
 
-  async embedText(text: string): Promise<number[]> {
+  embedText(text: string): Promise<number[]> {
     if (this.countTokens(text) > 8192) {
       throw new Error('Embedding input too large (> 8192 tokens)');
     }
-    return this.generateMockVector(text);
+    return Promise.resolve(this.generateMockVector(text));
   }
 
-  async embedBatch(texts: string[]): Promise<number[][]> {
-    return texts.map((t) => this.generateMockVector(t));
+  embedBatch(texts: string[]): Promise<number[][]> {
+    return Promise.resolve(texts.map((t) => this.generateMockVector(t)));
   }
 
-  async embedBatchSafe(texts: string[]): Promise<number[][]> {
+  embedBatchSafe(texts: string[]): Promise<number[][]> {
     return this.embedBatch(texts);
   }
 

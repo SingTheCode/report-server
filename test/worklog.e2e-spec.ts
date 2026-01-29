@@ -14,6 +14,24 @@ import { Document } from '../src/domains/rag/entities/document.entity';
 import { Embedding } from '../src/domains/rag/entities/embedding.entity';
 import { Worklog } from '../src/domains/worklog/entities/worklog.entity';
 
+interface WorklogItem {
+  id: string;
+  title: string;
+  url: string;
+}
+
+interface GraphQLResponse {
+  data?: {
+    syncNotion?: {
+      success: boolean;
+      syncedCount: number;
+      embeddedCount: number;
+    };
+    worklogs?: WorklogItem[];
+    worklogStatus?: { totalWorklogs: number };
+  };
+}
+
 describe('Worklog Sync (e2e)', () => {
   let app: INestApplication;
 
@@ -21,7 +39,9 @@ describe('Worklog Sync (e2e)', () => {
     fetchDatabaseAll: jest.fn().mockResolvedValue([
       {
         id: 'notion-page-1',
-        properties: { title: { title: [{ plain_text: 'Test Page' }] } },
+        properties: {
+          title: { type: 'title', title: [{ plain_text: 'Test Page' }] },
+        },
         url: 'https://notion.so/page1',
       },
     ]),
@@ -89,9 +109,10 @@ describe('Worklog Sync (e2e)', () => {
           `,
         });
 
-      expect(response.body.data.syncNotion.success).toBe(true);
-      expect(response.body.data.syncNotion.syncedCount).toBe(1);
-      expect(response.body.data.syncNotion.embeddedCount).toBeGreaterThan(0);
+      const body = response.body as GraphQLResponse;
+      expect(body.data?.syncNotion?.success).toBe(true);
+      expect(body.data?.syncNotion?.syncedCount).toBe(1);
+      expect(body.data?.syncNotion?.embeddedCount).toBeGreaterThan(0);
     });
 
     // Given: 동기화된 worklog가 있을 때
@@ -104,8 +125,10 @@ describe('Worklog Sync (e2e)', () => {
           query: `query { worklogs { id title url } }`,
         });
 
-      expect(response.body.data.worklogs.length).toBeGreaterThan(0);
-      expect(response.body.data.worklogs[0].title).toBe('Test Page');
+      const body = response.body as GraphQLResponse;
+      const worklogs = body.data?.worklogs ?? [];
+      expect(worklogs.length).toBeGreaterThan(0);
+      expect(worklogs[0].title).toBe('Test Page');
     });
 
     // Given: worklog가 저장되어 있을 때
@@ -118,7 +141,8 @@ describe('Worklog Sync (e2e)', () => {
           query: `query { worklogStatus { totalWorklogs } }`,
         });
 
-      expect(response.body.data.worklogStatus.totalWorklogs).toBeGreaterThan(0);
+      const body = response.body as GraphQLResponse;
+      expect(body.data?.worklogStatus?.totalWorklogs).toBeGreaterThan(0);
     });
   });
 });

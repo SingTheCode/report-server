@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { Subject, Observable } from 'rxjs';
+import {
+  PageObjectResponse,
+  BlockObjectResponse,
+  RichTextItemResponse,
+} from '@notionhq/client/build/src/api-endpoints';
 import { WorklogRepository } from './worklog.repository';
 import { NotionService } from '../../infrastructure/notion/notion.service';
 import { RagService } from '../rag/rag.service';
@@ -33,7 +38,7 @@ export class WorklogService {
     }
 
     const worklogs = await Promise.all(
-      pages.map(async (page: any) => {
+      pages.map(async (page) => {
         const blocks = await this.notionService.fetchBlockChildrenAll(
           page.id,
           input.apiToken,
@@ -70,26 +75,43 @@ export class WorklogService {
     };
   }
 
-  private extractTitle(page: any): string {
-    const titleProp = page.properties?.title || page.properties?.Name;
-    if (titleProp?.title?.[0]?.plain_text) {
+  private extractTitle(page: PageObjectResponse): string {
+    const props = page.properties;
+    const titleProp = props['title'] ?? props['Name'];
+    if (titleProp?.type === 'title' && titleProp.title[0]?.plain_text) {
       return titleProp.title[0].plain_text;
     }
     return 'Untitled';
   }
 
-  private extractContent(blocks: any[]): string {
+  private extractContent(blocks: BlockObjectResponse[]): string {
     return blocks
       .map((block) => {
-        const type = block.type;
-        const data = block[type];
-        if (data?.rich_text) {
-          return data.rich_text.map((t: any) => t.plain_text).join('');
+        const richText = this.getRichText(block);
+        if (richText) {
+          return richText.map((t) => t.plain_text).join('');
         }
         return '';
       })
       .filter(Boolean)
       .join('\n');
+  }
+
+  private getRichText(
+    block: BlockObjectResponse,
+  ): RichTextItemResponse[] | null {
+    if (block.type === 'paragraph') return block.paragraph.rich_text;
+    if (block.type === 'heading_1') return block.heading_1.rich_text;
+    if (block.type === 'heading_2') return block.heading_2.rich_text;
+    if (block.type === 'heading_3') return block.heading_3.rich_text;
+    if (block.type === 'bulleted_list_item')
+      return block.bulleted_list_item.rich_text;
+    if (block.type === 'numbered_list_item')
+      return block.numbered_list_item.rich_text;
+    if (block.type === 'quote') return block.quote.rich_text;
+    if (block.type === 'callout') return block.callout.rich_text;
+    if (block.type === 'toggle') return block.toggle.rich_text;
+    return null;
   }
 
   async getWorklogs() {
@@ -147,9 +169,11 @@ export class WorklogService {
 
         successFiles.push({ filename: file.filename });
       } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Unknown error';
         failedFiles.push({
           filename: file.filename,
-          error: error.message,
+          error: message,
         });
       }
     }

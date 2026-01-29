@@ -30,7 +30,7 @@ describe('WorklogResolver', () => {
     // Given: 파일이 업로드될 때
     // When: uploadWorklogs mutation을 호출하면
     // Then: uploadId만 반환하고 처리는 비동기로 진행된다
-    test('uploadId만 반환하고 처리는 비동기로 진행된다', async () => {
+    test('uploadId만 반환하고 처리는 비동기로 진행된다', () => {
       // Given
       const mockInput = { files: [] };
       const mockResult = {
@@ -48,7 +48,7 @@ describe('WorklogResolver', () => {
       );
 
       // When
-      const result = await resolver.uploadWorklogs(mockInput);
+      const result = resolver.uploadWorklogs(mockInput);
 
       // Then
       expect(result.uploadId).toBe('upload-123');
@@ -77,7 +77,7 @@ describe('WorklogResolver', () => {
       );
 
       // When
-      await resolver.uploadWorklogs(mockInput);
+      resolver.uploadWorklogs(mockInput);
 
       // 비동기 처리 완료 대기
       await new Promise((resolve) => setTimeout(resolve, 10));

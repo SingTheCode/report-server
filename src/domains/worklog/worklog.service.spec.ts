@@ -231,7 +231,9 @@ describe('WorklogService', () => {
       // Then
       expect(progressCallback).toHaveBeenCalled();
       // processing, embedding 상태가 호출됨
-      const calls = progressCallback.mock.calls.map((c) => c[0].status);
+      const calls = (
+        progressCallback.mock.calls as Array<[{ status: string }]>
+      ).map((c) => c[0].status);
       expect(calls).toContain('processing');
       expect(calls).toContain('embedding');
     });
@@ -250,7 +252,7 @@ describe('WorklogService', () => {
 
       // Then
       expect(stream).toBeDefined();
-      expect(stream.subscribe).toBeDefined();
+      expect(typeof stream.subscribe).toBe('function');
     });
 
     // Given: 존재하지 않는 업로드 ID일 때

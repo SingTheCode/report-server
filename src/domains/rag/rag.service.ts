@@ -5,12 +5,13 @@ import { RagRepository } from './rag.repository';
 import { OpenAiService } from '../../infrastructure/openai/openai.service';
 import { BuildEmbeddingsInput } from './dto/input/build-embeddings.input';
 import { SearchEmbeddingsInput } from './dto/input/search-embeddings.input';
+import { SearchResultOutput } from './dto/output/search-result.output';
 
 @Injectable()
 export class RagService {
   private enc: Tiktoken;
   private queryVectorCache: LRUCache<string, number[]>;
-  private searchCache: LRUCache<string, any>;
+  private searchCache: LRUCache<string, SearchResultOutput>;
 
   constructor(
     private ragRepo: RagRepository,
@@ -78,7 +79,7 @@ export class RagService {
     };
   }
 
-  async search(input: SearchEmbeddingsInput) {
+  async search(input: SearchEmbeddingsInput): Promise<SearchResultOutput> {
     const limit = input.limit ?? 5;
     const cacheKey = `${input.query}::${limit}`;
 
@@ -95,19 +96,19 @@ export class RagService {
     }
 
     const embeddings = await this.ragRepo.findAllEmbeddings();
+    const qv = queryVector;
 
     const results = embeddings
       .map((e) => ({
         documentId: e.documentId,
         content: e.content,
-        similarity: this.dot(queryVector, e.vector),
+        similarity: this.dot(qv, e.vector),
       }))
       .sort((a, b) => b.similarity - a.similarity)
       .slice(0, limit);
 
-    const out = { results };
+    const out: SearchResultOutput = { results };
     this.searchCache.set(cacheKey, out);
     return out;
   }
-
 }

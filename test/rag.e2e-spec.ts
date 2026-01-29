@@ -12,6 +12,23 @@ import { MockOpenAiService } from './mock-openai.service';
 import { Document } from '../src/domains/rag/entities/document.entity';
 import { Embedding } from '../src/domains/rag/entities/embedding.entity';
 
+interface SearchResult {
+  documentId: string;
+  similarity: number;
+}
+
+interface GraphQLResponse {
+  data?: {
+    buildEmbeddings?: {
+      success: boolean;
+      documentCount: number;
+      chunkCount: number;
+    };
+    searchEmbeddings?: { results: SearchResult[] };
+    embeddingStatus?: { totalEmbeddings: number };
+  };
+}
+
 describe('RAG Pipeline (e2e)', () => {
   let app: INestApplication;
 
@@ -72,8 +89,9 @@ describe('RAG Pipeline (e2e)', () => {
           `,
         });
 
-      expect(buildResponse.body.data.buildEmbeddings.success).toBe(true);
-      expect(buildResponse.body.data.buildEmbeddings.documentCount).toBe(2);
+      const buildBody = buildResponse.body as GraphQLResponse;
+      expect(buildBody.data?.buildEmbeddings?.success).toBe(true);
+      expect(buildBody.data?.buildEmbeddings?.documentCount).toBe(2);
 
       // 2. 검색
       const searchResponse = await request(app.getHttpServer())
@@ -91,7 +109,8 @@ describe('RAG Pipeline (e2e)', () => {
           `,
         });
 
-      const results = searchResponse.body.data.searchEmbeddings.results;
+      const searchBody = searchResponse.body as GraphQLResponse;
+      const results = searchBody.data?.searchEmbeddings?.results ?? [];
       expect(results.length).toBe(2);
       expect(results[0]).toHaveProperty('documentId');
       expect(results[0]).toHaveProperty('similarity');
@@ -119,7 +138,8 @@ describe('RAG Pipeline (e2e)', () => {
         .post('/graphql')
         .send({ query: `query { embeddingStatus { totalEmbeddings } }` });
 
-      const count1 = status1.body.data.embeddingStatus.totalEmbeddings;
+      const status1Body = status1.body as GraphQLResponse;
+      const count1 = status1Body.data?.embeddingStatus?.totalEmbeddings ?? 0;
 
       // 두 번째 빌드 (동일 ID)
       await request(app.getHttpServer())
@@ -139,7 +159,8 @@ describe('RAG Pipeline (e2e)', () => {
         .post('/graphql')
         .send({ query: `query { embeddingStatus { totalEmbeddings } }` });
 
-      const count2 = status2.body.data.embeddingStatus.totalEmbeddings;
+      const status2Body = status2.body as GraphQLResponse;
+      const count2 = status2Body.data?.embeddingStatus?.totalEmbeddings ?? 0;
       expect(count2).toBe(count1); // 멱등성: 동일 문서는 교체됨
     });
   });

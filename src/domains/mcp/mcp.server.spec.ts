@@ -67,7 +67,7 @@ describe('McpServer', () => {
     test('존재하지 않는 도구 호출 시 에러를 던진다', async () => {
       // Given
       const toolName = 'unknown_tool';
-      const args = {};
+      const args = { query: '' };
 
       // When & Then
       await expect(mcpServer.handleToolCall(toolName, args)).rejects.toThrow(

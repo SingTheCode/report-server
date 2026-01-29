@@ -12,6 +12,14 @@ import { MockOpenAiService } from './mock-openai.service';
 import { Document } from '../src/domains/rag/entities/document.entity';
 import { Embedding } from '../src/domains/rag/entities/embedding.entity';
 
+interface GraphQLResponse {
+  data?: {
+    buildEmbeddings?: { success: boolean; documentCount: number };
+    searchEmbeddings?: { results: Array<{ documentId: string }> };
+  };
+  errors?: Array<{ message: string }>;
+}
+
 describe('Error Handling (e2e)', () => {
   let app: INestApplication;
 
@@ -66,8 +74,9 @@ describe('Error Handling (e2e)', () => {
           `,
         });
 
-      expect(response.body.data.buildEmbeddings.success).toBe(true);
-      expect(response.body.data.buildEmbeddings.documentCount).toBe(0);
+      const body = response.body as GraphQLResponse;
+      expect(body.data?.buildEmbeddings?.success).toBe(true);
+      expect(body.data?.buildEmbeddings?.documentCount).toBe(0);
     });
 
     // Given: limit이 범위를 벗어났을 때
@@ -86,7 +95,8 @@ describe('Error Handling (e2e)', () => {
           `,
         });
 
-      expect(response.body.errors).toBeDefined();
+      const body = response.body as GraphQLResponse;
+      expect(body.errors).toBeDefined();
     });
   });
 
@@ -109,8 +119,9 @@ describe('Error Handling (e2e)', () => {
           `,
         });
 
-      expect(response.body.errors).toBeDefined();
-      expect(response.body.errors[0].message).toMatch(/too large/i);
+      const body = response.body as GraphQLResponse;
+      expect(body.errors).toBeDefined();
+      expect(body.errors?.[0].message).toMatch(/too large/i);
     });
   });
 });

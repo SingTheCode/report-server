@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { WorklogController } from './worklog.controller';
 import { WorklogService } from './worklog.service';
 import { Subject } from 'rxjs';
+import { UploadProgressOutput } from './dto/output/upload-worklogs.output';
 
 describe('WorklogController', () => {
   let controller: WorklogController;
@@ -27,7 +28,7 @@ describe('WorklogController', () => {
     test('진행현황 스트림을 반환한다', (done) => {
       // Given
       const uploadId = 'test-upload-id';
-      const progressSubject = new Subject<any>();
+      const progressSubject = new Subject<UploadProgressOutput>();
 
       (mockWorklogService.getProgressStream as jest.Mock).mockReturnValue(
         progressSubject.asObservable(),
@@ -37,7 +38,7 @@ describe('WorklogController', () => {
       const stream = controller.uploadProgress(uploadId);
 
       // Then
-      const receivedData: any[] = [];
+      const receivedData: Array<{ data: UploadProgressOutput }> = [];
       stream.subscribe({
         next: (event) => receivedData.push(event),
         complete: () => {
@@ -49,8 +50,20 @@ describe('WorklogController', () => {
       });
 
       // 진행현황 전송
-      progressSubject.next({ progress: 0.5, status: 'processing' });
-      progressSubject.next({ progress: 1, status: 'completed' });
+      progressSubject.next({
+        totalFiles: 1,
+        processedFiles: 0,
+        progress: 0.5,
+        currentFile: 'test.md',
+        status: 'processing',
+      });
+      progressSubject.next({
+        totalFiles: 1,
+        processedFiles: 1,
+        progress: 1,
+        currentFile: '',
+        status: 'completed',
+      });
       progressSubject.complete();
     });
 

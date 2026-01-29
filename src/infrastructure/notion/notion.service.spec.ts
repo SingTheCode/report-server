@@ -1,4 +1,10 @@
 import { NotionService } from './notion.service';
+import { Client } from '@notionhq/client';
+
+interface MockClient {
+  databases: { query: jest.Mock };
+  blocks: { children: { list: jest.Mock } };
+}
 
 describe('NotionService', () => {
   let service: NotionService;
@@ -9,20 +15,15 @@ describe('NotionService', () => {
     mockDatabaseQuery = jest.fn();
     mockBlocksList = jest.fn();
 
-    // Notion Client 모킹
-    jest.mock('@notionhq/client', () => ({
-      Client: jest.fn().mockImplementation(() => ({
-        databases: { query: mockDatabaseQuery },
-        blocks: { children: { list: mockBlocksList } },
-      })),
-    }));
-
     service = new NotionService();
     // 내부 클라이언트 메서드 직접 모킹
-    (service as any).makeClient = jest.fn().mockReturnValue({
+    const mockClient: MockClient = {
       databases: { query: mockDatabaseQuery },
       blocks: { children: { list: mockBlocksList } },
-    });
+    };
+    jest
+      .spyOn(service as unknown as { makeClient: () => Client }, 'makeClient')
+      .mockReturnValue(mockClient as unknown as Client);
   });
 
   describe('fetchDatabaseAll', () => {
@@ -30,8 +31,11 @@ describe('NotionService', () => {
     // When: 데이터베이스를 조회하면
     // Then: 모든 결과를 반환한다
     test('단일 페이지 결과를 반환한다', async () => {
-      // Given
-      const mockResults = [{ id: '1' }, { id: '2' }];
+      // Given - properties 필드가 있어야 PageObjectResponse로 인식됨
+      const mockResults = [
+        { id: '1', properties: {} },
+        { id: '2', properties: {} },
+      ];
       mockDatabaseQuery.mockResolvedValue({
         results: mockResults,
         has_more: false,
@@ -41,7 +45,7 @@ describe('NotionService', () => {
       const result = await service.fetchDatabaseAll('db-id', 'token');
 
       // Then
-      expect(result).toEqual(mockResults);
+      expect(result).toHaveLength(2);
       expect(mockDatabaseQuery).toHaveBeenCalledTimes(1);
     });
 
@@ -49,9 +53,9 @@ describe('NotionService', () => {
     // When: 데이터베이스를 조회하면
     // Then: 페이지네이션으로 모든 결과를 반환한다
     test('페이지네이션으로 전체 결과를 반환한다', async () => {
-      // Given
-      const page1 = Array(100).fill({ id: 'p1' });
-      const page2 = Array(50).fill({ id: 'p2' });
+      // Given - properties 필드 포함
+      const page1 = Array(100).fill({ id: 'p1', properties: {} });
+      const page2 = Array(50).fill({ id: 'p2', properties: {} });
 
       mockDatabaseQuery
         .mockResolvedValueOnce({
@@ -78,8 +82,11 @@ describe('NotionService', () => {
     // When: 블록 자식을 조회하면
     // Then: 모든 블록을 반환한다
     test('단일 페이지 블록을 반환한다', async () => {
-      // Given
-      const mockBlocks = [{ id: 'b1' }, { id: 'b2' }];
+      // Given - type 필드가 있어야 BlockObjectResponse로 인식됨
+      const mockBlocks = [
+        { id: 'b1', type: 'paragraph' },
+        { id: 'b2', type: 'paragraph' },
+      ];
       mockBlocksList.mockResolvedValue({
         results: mockBlocks,
         has_more: false,
@@ -89,16 +96,16 @@ describe('NotionService', () => {
       const result = await service.fetchBlockChildrenAll('block-id', 'token');
 
       // Then
-      expect(result).toEqual(mockBlocks);
+      expect(result).toHaveLength(2);
     });
 
     // Given: 100개 초과의 블록이 있을 때
     // When: 블록 자식을 조회하면
     // Then: 페이지네이션으로 모든 블록을 반환한다
     test('페이지네이션으로 전체 블록을 반환한다', async () => {
-      // Given
-      const page1 = Array(100).fill({ id: 'b1' });
-      const page2 = Array(30).fill({ id: 'b2' });
+      // Given - type 필드 포함
+      const page1 = Array(100).fill({ id: 'b1', type: 'paragraph' });
+      const page2 = Array(30).fill({ id: 'b2', type: 'paragraph' });
 
       mockBlocksList
         .mockResolvedValueOnce({

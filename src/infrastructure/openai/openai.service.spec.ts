@@ -27,7 +27,9 @@ describe('OpenAiService', () => {
     }).compile();
 
     service = module.get<OpenAiService>(OpenAiService);
-    mockEmbeddingsCreate = (service as any).client.embeddings.create;
+    mockEmbeddingsCreate = (
+      service as unknown as { client: { embeddings: { create: jest.Mock } } }
+    ).client.embeddings.create;
   });
 
   describe('countTokens', () => {
@@ -115,7 +117,7 @@ describe('OpenAiService', () => {
     // Then: 에러를 던진다
     test('배치 크기 제한 초과 시 에러를 던진다', async () => {
       // Given
-      const texts = Array(2049).fill('text');
+      const texts = Array.from({ length: 2049 }, () => 'text');
 
       // When & Then
       await expect(service.embedBatch(texts)).rejects.toThrow(/too many/i);
@@ -128,10 +130,13 @@ describe('OpenAiService', () => {
     // Then: 청크로 나누어 처리하고 전체 결과를 반환한다
     test('대량 텍스트를 청크로 나누어 처리한다', async () => {
       // Given
-      const texts = Array(300).fill('text');
-      mockEmbeddingsCreate.mockImplementation(({ input }) => ({
-        data: input.map(() => ({ embedding: [0.1] })),
-      }));
+      const texts = Array.from({ length: 300 }, () => 'text');
+      mockEmbeddingsCreate.mockImplementation(
+        ({ input }: { input: string[] }) =>
+          Promise.resolve({
+            data: input.map(() => ({ embedding: [0.1] })),
+          }),
+      );
 
       // When
       const result = await service.embedBatchSafe(texts, 100);

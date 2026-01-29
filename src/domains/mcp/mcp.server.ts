@@ -1,10 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { RagService } from '../rag/rag.service';
+import { SearchResultOutput } from '../rag/dto/output/search-result.output';
 
 interface Tool {
   name: string;
   description: string;
   inputSchema: object;
+}
+
+interface SearchWorklogArgs {
+  query: string;
+  limit?: number;
 }
 
 @Injectable()
@@ -28,7 +34,10 @@ export class McpServer {
     ];
   }
 
-  async handleToolCall(toolName: string, args: Record<string, any>) {
+  async handleToolCall(
+    toolName: string,
+    args: SearchWorklogArgs,
+  ): Promise<SearchResultOutput> {
     switch (toolName) {
       case 'search_worklog':
         return this.ragService.search({

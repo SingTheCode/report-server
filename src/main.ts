@@ -30,4 +30,4 @@ async function bootstrap() {
   await app.listen(port);
   logger.log(`Server running on http://localhost:${port}/graphql`);
 }
-bootstrap();
+void bootstrap();
