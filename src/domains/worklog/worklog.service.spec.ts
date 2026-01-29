@@ -237,6 +237,95 @@ describe('WorklogService', () => {
       expect(calls).toContain('processing');
       expect(calls).toContain('embedding');
     });
+
+    // Given: 파일 크기가 50KB를 초과할 때
+    // When: uploadFiles를 호출하면
+    // Then: 해당 파일은 실패 처리하고 다음 파일을 계속 진행한다
+    test('50KB 초과 파일은 실패 처리하고 다음 파일 계속 진행', async () => {
+      // Given
+      const largeContent = 'x'.repeat(51 * 1024); // 51KB
+      const files = [
+        { filename: 'large.md', content: largeContent },
+        { filename: 'normal.md', content: 'Normal content' },
+      ];
+
+      // When
+      const result = await service.uploadFiles({ files });
+
+      // Then
+      expect(result.successCount).toBe(1);
+      expect(result.failedCount).toBe(1);
+      expect(result.failedFiles[0].filename).toBe('large.md');
+      expect(result.failedFiles[0].error).toContain('50KB');
+      expect(result.successFiles[0].filename).toBe('normal.md');
+    });
+
+    // Given: base64 이미지 제거 후 50KB 이하가 되는 파일일 때
+    // When: uploadFiles를 호출하면
+    // Then: 성공적으로 처리한다
+    test('base64 이미지 제거 후 50KB 이하면 성공 처리', async () => {
+      // Given: 이미지 데이터로 50KB 초과하지만, 제거 후 50KB 이하
+      const base64Image = 'data:image/png;base64,' + 'x'.repeat(40 * 1024);
+      const contentWithLargeImage = `# Title\n![image](${base64Image})\nSmall text`;
+      const mockFile = {
+        filename: 'with-large-image.md',
+        content: contentWithLargeImage,
+      };
+
+      // When
+      const result = await service.uploadFiles({ files: [mockFile] });
+
+      // Then
+      expect(result.successCount).toBe(1);
+      expect(result.failedCount).toBe(0);
+    });
+
+    // Given: 파일에 base64 이미지 데이터가 포함되어 있을 때
+    // When: uploadFiles를 호출하면
+    // Then: base64 이미지 데이터를 제거하고 처리한다
+    test('base64 이미지 데이터를 제거하고 처리한다', async () => {
+      // Given
+      const contentWithBase64 =
+        '# Title\n![image](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA)\nSome text';
+      const mockFile = {
+        filename: 'with-image.md',
+        content: contentWithBase64,
+      };
+
+      // When
+      await service.uploadFiles({ files: [mockFile] });
+
+      // Then
+      const savedContent = (mockRagService.buildEmbeddings as jest.Mock).mock
+        .calls[0][0].documents[0].content;
+      expect(savedContent).not.toContain('data:image');
+      expect(savedContent).toContain('# Title');
+      expect(savedContent).toContain('Some text');
+    });
+
+    // Given: 첫 번째 파일에서 에러가 발생할 때
+    // When: uploadFiles를 호출하면
+    // Then: 다음 파일을 계속 처리한다
+    test('에러 발생해도 다음 파일 계속 진행', async () => {
+      // Given
+      const files = [
+        { filename: 'error.md', content: 'Content 1' },
+        { filename: 'success.md', content: 'Content 2' },
+      ];
+
+      (mockRagService.buildEmbeddings as jest.Mock)
+        .mockRejectedValueOnce(new Error('First file error'))
+        .mockResolvedValueOnce({ success: true });
+
+      // When
+      const result = await service.uploadFiles({ files });
+
+      // Then
+      expect(result.successCount).toBe(1);
+      expect(result.failedCount).toBe(1);
+      expect(result.failedFiles[0].filename).toBe('error.md');
+      expect(result.successFiles[0].filename).toBe('success.md');
+    });
   });
 
   describe('getProgressStream', () => {

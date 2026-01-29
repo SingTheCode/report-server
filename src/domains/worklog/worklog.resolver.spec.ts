@@ -91,5 +91,43 @@ describe('WorklogResolver', () => {
         }),
       );
     });
+
+    // Given: 업로드 처리 중 에러가 발생할 때
+    // When: uploadFiles가 reject되면
+    // Then: emitProgress로 에러 상태를 전송한다
+    test('업로드 처리 중 에러 발생 시 emitProgress로 에러 상태를 전송한다', async () => {
+      // Given
+      const mockInput = {
+        files: [
+          { filename: 'file1.md', content: 'content1' },
+          { filename: 'file2.md', content: 'content2' },
+        ],
+      };
+
+      (mockWorklogService.createProgressStream as jest.Mock).mockReturnValue(
+        'upload-789',
+      );
+      (mockWorklogService.uploadFiles as jest.Mock).mockRejectedValue(
+        new Error('Embedding failed'),
+      );
+
+      // When
+      resolver.uploadWorklogs(mockInput);
+
+      // 비동기 처리 완료 대기
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      // Then
+      expect(mockWorklogService.emitProgress).toHaveBeenCalledWith(
+        'upload-789',
+        expect.objectContaining({
+          status: 'error',
+          result: expect.objectContaining({
+            successCount: 0,
+            failedCount: 2,
+          }),
+        }),
+      );
+    });
   });
 });

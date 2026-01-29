@@ -122,6 +122,12 @@ export class WorklogService {
     return this.worklogRepo.getStatus();
   }
 
+  private static readonly MAX_CONTENT_SIZE = 50 * 1024; // 50KB
+
+  private sanitizeContent(content: string): string {
+    return content.replace(/!\[.*?\]\(data:image\/[^)]+\)/g, '[이미지 제거됨]');
+  }
+
   async uploadFiles(
     input: UploadWorklogsInput,
     onProgress?: (progress: UploadProgressOutput) => void,
@@ -143,7 +149,17 @@ export class WorklogService {
           status: 'processing',
         });
 
-        const content = file.content;
+        // base64 이미지 데이터 제거 (크기 검증 전에 수행)
+        const content = this.sanitizeContent(file.content);
+
+        // 파일 크기 검증
+        if (content.length > WorklogService.MAX_CONTENT_SIZE) {
+          failedFiles.push({
+            filename: file.filename,
+            error: `파일 크기가 너무 큽니다 (${Math.round(content.length / 1024)}KB > 50KB)`,
+          });
+          continue;
+        }
 
         onProgress?.({
           totalFiles,

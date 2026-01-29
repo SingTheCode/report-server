@@ -30,16 +30,36 @@ export class WorklogResolver {
     };
 
     // 비동기로 처리 (await 하지 않음)
-    void this.worklogService.uploadFiles(input, onProgress).then((result) => {
-      this.worklogService.emitProgress(uploadId, {
-        totalFiles: result.successCount + result.failedCount,
-        processedFiles: result.successCount + result.failedCount,
-        progress: 1,
-        currentFile: '',
-        status: 'completed',
-        result,
+    void this.worklogService
+      .uploadFiles(input, onProgress)
+      .then((result) => {
+        this.worklogService.emitProgress(uploadId, {
+          totalFiles: result.successCount + result.failedCount,
+          processedFiles: result.successCount + result.failedCount,
+          progress: 1,
+          currentFile: '',
+          status: 'completed',
+          result,
+        });
+      })
+      .catch((error) => {
+        this.worklogService.emitProgress(uploadId, {
+          totalFiles: input.files.length,
+          processedFiles: 0,
+          progress: 0,
+          currentFile: '',
+          status: 'error',
+          result: {
+            successCount: 0,
+            failedCount: input.files.length,
+            successFiles: [],
+            failedFiles: input.files.map((f) => ({
+              filename: f.filename,
+              error: error.message || 'Unknown error',
+            })),
+          },
+        });
       });
-    });
 
     return { uploadId };
   }
