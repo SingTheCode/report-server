@@ -1,0 +1,14 @@
+node_modules
+dist
+coverage
+.git
+.gitignore
+.idea
+.kiro
+.serena
+*.sqlite
+.env
+.env.local
+*.md
+test
+*.spec.ts
