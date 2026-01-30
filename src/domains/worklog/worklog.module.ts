@@ -5,11 +5,10 @@ import { WorklogService } from './worklog.service';
 import { WorklogRepository } from './worklog.repository';
 import { WorklogController } from './worklog.controller';
 import { Worklog } from './entities/worklog.entity';
-import { NotionModule } from '../../infrastructure/notion/notion.module';
 import { RagModule } from '../rag/rag.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Worklog]), NotionModule, RagModule],
+  imports: [TypeOrmModule.forFeature([Worklog]), RagModule],
   controllers: [WorklogController],
   providers: [WorklogResolver, WorklogService, WorklogRepository],
   exports: [WorklogRepository],

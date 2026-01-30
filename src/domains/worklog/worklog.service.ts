@@ -1,15 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { Subject, Observable } from 'rxjs';
-import {
-  PageObjectResponse,
-  BlockObjectResponse,
-  RichTextItemResponse,
-} from '@notionhq/client/build/src/api-endpoints';
 import { WorklogRepository } from './worklog.repository';
-import { NotionService } from '../../infrastructure/notion/notion.service';
 import { RagService } from '../rag/rag.service';
-import { SyncNotionInput } from './dto/input/sync-notion.input';
 import { UploadWorklogsInput } from './dto/input/upload-worklogs.input';
 import {
   UploadedFileInfo,
@@ -23,104 +16,8 @@ export class WorklogService {
 
   constructor(
     private worklogRepo: WorklogRepository,
-    private notionService: NotionService,
     private ragService: RagService,
   ) {}
-
-  async syncNotion(input: SyncNotionInput) {
-    const pages = await this.notionService.fetchDatabaseAll(
-      input.databaseId,
-      input.apiToken,
-    );
-
-    if (pages.length === 0) {
-      return { success: true, syncedCount: 0, embeddedCount: 0 };
-    }
-
-    const worklogs = await Promise.all(
-      pages.map(async (page) => {
-        const blocks = await this.notionService.fetchBlockChildrenAll(
-          page.id,
-          input.apiToken,
-        );
-        const content = this.extractContent(blocks);
-        const title = this.extractTitle(page);
-
-        return {
-          id: page.id,
-          title,
-          content,
-          url: page.url,
-          syncedAt: new Date(),
-        };
-      }),
-    );
-
-    await this.worklogRepo.saveWorklogs(worklogs);
-
-    const documents = worklogs.map((w) => ({
-      id: w.id,
-      content: `${w.title}\n\n${w.content}`,
-      title: JSON.stringify({ title: w.title, url: w.url }),
-    }));
-
-    const embeddingResult = await this.ragService.buildEmbeddings({
-      documents,
-    });
-
-    return {
-      success: true,
-      syncedCount: worklogs.length,
-      embeddedCount: embeddingResult.chunkCount,
-    };
-  }
-
-  private extractTitle(page: PageObjectResponse): string {
-    const props = page.properties;
-    const titleProp = props['title'] ?? props['Name'];
-    if (titleProp?.type === 'title' && titleProp.title[0]?.plain_text) {
-      return titleProp.title[0].plain_text;
-    }
-    return 'Untitled';
-  }
-
-  private extractContent(blocks: BlockObjectResponse[]): string {
-    return blocks
-      .map((block) => {
-        const richText = this.getRichText(block);
-        if (richText) {
-          return richText.map((t) => t.plain_text).join('');
-        }
-        return '';
-      })
-      .filter(Boolean)
-      .join('\n');
-  }
-
-  private getRichText(
-    block: BlockObjectResponse,
-  ): RichTextItemResponse[] | null {
-    if (block.type === 'paragraph') return block.paragraph.rich_text;
-    if (block.type === 'heading_1') return block.heading_1.rich_text;
-    if (block.type === 'heading_2') return block.heading_2.rich_text;
-    if (block.type === 'heading_3') return block.heading_3.rich_text;
-    if (block.type === 'bulleted_list_item')
-      return block.bulleted_list_item.rich_text;
-    if (block.type === 'numbered_list_item')
-      return block.numbered_list_item.rich_text;
-    if (block.type === 'quote') return block.quote.rich_text;
-    if (block.type === 'callout') return block.callout.rich_text;
-    if (block.type === 'toggle') return block.toggle.rich_text;
-    return null;
-  }
-
-  async getWorklogs() {
-    return this.worklogRepo.findAll();
-  }
-
-  async getStatus() {
-    return this.worklogRepo.getStatus();
-  }
 
   private static readonly MAX_CONTENT_SIZE = 50 * 1024; // 50KB
 

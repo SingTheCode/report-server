@@ -5,7 +5,6 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
 import { DatabaseModule } from './infrastructure/database/database.module';
 import { OpenAiModule } from './infrastructure/openai/openai.module';
-import { NotionModule } from './infrastructure/notion/notion.module';
 import { RagModule } from './domains/rag/rag.module';
 import { WorklogModule } from './domains/worklog/worklog.module';
 import { McpModule } from './domains/mcp/mcp.module';
@@ -27,7 +26,6 @@ import { McpModule } from './domains/mcp/mcp.module';
     // Infrastructure
     DatabaseModule,
     OpenAiModule,
-    NotionModule,
 
     // Domains
     RagModule,

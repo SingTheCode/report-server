@@ -8,50 +8,21 @@ import { ApolloDriver } from '@nestjs/apollo';
 import { join } from 'path';
 import { WorklogModule } from '../src/domains/worklog/worklog.module';
 import { OpenAiService } from '../src/infrastructure/openai/openai.service';
-import { NotionService } from '../src/infrastructure/notion/notion.service';
 import { MockOpenAiService } from './mock-openai.service';
 import { Document } from '../src/domains/rag/entities/document.entity';
 import { Embedding } from '../src/domains/rag/entities/embedding.entity';
 import { Worklog } from '../src/domains/worklog/entities/worklog.entity';
 
-interface WorklogItem {
-  id: string;
-  title: string;
-  url: string;
-}
-
 interface GraphQLResponse {
   data?: {
-    syncNotion?: {
-      success: boolean;
-      syncedCount: number;
-      embeddedCount: number;
+    uploadWorklogs?: {
+      uploadId: string;
     };
-    worklogs?: WorklogItem[];
-    worklogStatus?: { totalWorklogs: number };
   };
 }
 
-describe('Worklog Sync (e2e)', () => {
+describe('Worklog Upload (e2e)', () => {
   let app: INestApplication;
-
-  const mockNotionService = {
-    fetchDatabaseAll: jest.fn().mockResolvedValue([
-      {
-        id: 'notion-page-1',
-        properties: {
-          title: { type: 'title', title: [{ plain_text: 'Test Page' }] },
-        },
-        url: 'https://notion.so/page1',
-      },
-    ]),
-    fetchBlockChildrenAll: jest.fn().mockResolvedValue([
-      {
-        type: 'paragraph',
-        paragraph: { rich_text: [{ plain_text: 'Page content' }] },
-      },
-    ]),
-  };
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -72,8 +43,6 @@ describe('Worklog Sync (e2e)', () => {
     })
       .overrideProvider(OpenAiService)
       .useClass(MockOpenAiService)
-      .overrideProvider(NotionService)
-      .useValue(mockNotionService)
       .compile();
 
     app = moduleFixture.createNestApplication();
@@ -87,62 +56,29 @@ describe('Worklog Sync (e2e)', () => {
     await app.close();
   });
 
-  describe('Notion 동기화', () => {
-    // Given: Notion 데이터베이스에 페이지가 있을 때
-    // When: syncNotion을 호출하면
-    // Then: 페이지가 저장되고 임베딩이 생성된다
-    test('Notion 페이지 동기화 및 임베딩 생성', async () => {
+  describe('파일 업로드', () => {
+    // Given: 파일이 업로드될 때
+    // When: uploadWorklogs mutation을 호출하면
+    // Then: uploadId를 반환한다
+    test('파일 업로드 시 uploadId 반환', async () => {
       const response = await request(app.getHttpServer())
         .post('/graphql')
         .send({
           query: `
             mutation {
-              syncNotion(input: {
-                databaseId: "test-db-id",
-                apiToken: "test-token"
+              uploadWorklogs(input: {
+                files: [
+                  { filename: "test.md", content: "# Test Content" }
+                ]
               }) {
-                success
-                syncedCount
-                embeddedCount
+                uploadId
               }
             }
           `,
         });
 
       const body = response.body as GraphQLResponse;
-      expect(body.data?.syncNotion?.success).toBe(true);
-      expect(body.data?.syncNotion?.syncedCount).toBe(1);
-      expect(body.data?.syncNotion?.embeddedCount).toBeGreaterThan(0);
-    });
-
-    // Given: 동기화된 worklog가 있을 때
-    // When: worklogs를 조회하면
-    // Then: 저장된 worklog 목록을 반환한다
-    test('동기화된 worklog 조회', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/graphql')
-        .send({
-          query: `query { worklogs { id title url } }`,
-        });
-
-      const body = response.body as GraphQLResponse;
-      const worklogs = body.data?.worklogs ?? [];
-      expect(worklogs.length).toBeGreaterThan(0);
-      expect(worklogs[0].title).toBe('Test Page');
-    });
-
-    // Given: worklog가 저장되어 있을 때
-    // When: worklogStatus를 조회하면
-    // Then: 총 worklog 수를 반환한다
-    test('worklog 상태 조회', async () => {
-      const response = await request(app.getHttpServer())
-        .post('/graphql')
-        .send({
-          query: `query { worklogStatus { totalWorklogs } }`,
-        });
-
-      const body = response.body as GraphQLResponse;
-      expect(body.data?.worklogStatus?.totalWorklogs).toBeGreaterThan(0);
+      expect(body.data?.uploadWorklogs?.uploadId).toBeDefined();
     });
   });
 });

@@ -8,9 +8,6 @@ describe('WorklogResolver', () => {
 
   beforeEach(async () => {
     mockWorklogService = {
-      syncNotion: jest.fn(),
-      getWorklogs: jest.fn(),
-      getStatus: jest.fn(),
       uploadFiles: jest.fn(),
       createProgressStream: jest.fn(),
       emitProgress: jest.fn(),
