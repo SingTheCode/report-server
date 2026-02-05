@@ -10,7 +10,6 @@ describe('RagService', () => {
 
   beforeEach(async () => {
     mockRagRepo = {
-      saveDocument: jest.fn(),
       saveEmbeddings: jest.fn(),
       deleteByDocumentId: jest.fn(),
       findAllEmbeddings: jest.fn(),
@@ -40,20 +39,17 @@ describe('RagService', () => {
   describe('buildEmbeddings', () => {
     // Given: 문서 배열이 주어졌을 때
     // When: buildEmbeddings를 호출하면
-    // Then: 문서 저장, 기존 임베딩 삭제, 새 임베딩 생성이 수행된다
+    // Then: 기존 임베딩 삭제, 새 임베딩 생성이 수행된다
     test('문서를 임베딩으로 변환하여 저장한다', async () => {
       // Given
       const input = {
-        documents: [
-          { id: 'doc1', content: 'test content', title: 'test title' },
-        ],
+        documents: [{ id: 'doc1', content: 'test content' }],
       };
 
       // When
       const result = await service.buildEmbeddings(input);
 
       // Then
-      expect(mockRagRepo.saveDocument).toHaveBeenCalled();
       expect(mockRagRepo.deleteByDocumentId).toHaveBeenCalledWith('doc1');
       expect(mockOpenAi.embedBatchSafe).toHaveBeenCalled();
       expect(mockRagRepo.saveEmbeddings).toHaveBeenCalled();
@@ -68,8 +64,8 @@ describe('RagService', () => {
       // Given
       const input = {
         documents: [
-          { id: 'doc1', content: 'content 1', title: 'test content' },
-          { id: 'doc2', content: 'content 2', title: 'test content' },
+          { id: 'doc1', content: 'content 1' },
+          { id: 'doc2', content: 'content 2' },
         ],
       };
 
@@ -78,7 +74,7 @@ describe('RagService', () => {
 
       // Then
       expect(result.documentCount).toBe(2);
-      expect(mockRagRepo.saveDocument).toHaveBeenCalledTimes(2);
+      expect(mockRagRepo.deleteByDocumentId).toHaveBeenCalledTimes(2);
     });
   });
 

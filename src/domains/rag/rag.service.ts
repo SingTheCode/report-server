@@ -54,7 +54,6 @@ export class RagService {
     let totalChunks = 0;
 
     for (const doc of input.documents) {
-      await this.ragRepo.saveDocument(doc);
       await this.ragRepo.deleteByDocumentId(doc.id);
 
       const chunks = this.chunkByTokens(doc.content);

@@ -68,7 +68,7 @@ export class WorklogService {
 
         const docId = randomUUID();
         await this.ragService.buildEmbeddings({
-          documents: [{ id: docId, content, title: file.filename }],
+          documents: [{ id: docId, content }],
         });
 
         await this.worklogRepo.saveWorklogs([

@@ -93,7 +93,6 @@ export class McpServer {
         worklog: {
           title: worklog?.title ?? '',
           content: worklog?.content ?? '',
-          url: worklog?.url,
         },
       };
     });

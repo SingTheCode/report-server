@@ -18,4 +18,7 @@ export class Embedding {
 
   @Column('simple-json')
   vector: number[];
+
+  @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
+  createdAt: Date;
 }
