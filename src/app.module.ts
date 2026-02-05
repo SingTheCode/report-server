@@ -8,6 +8,7 @@ import { OpenAiModule } from './infrastructure/openai/openai.module';
 import { RagModule } from './domains/rag/rag.module';
 import { WorklogModule } from './domains/worklog/worklog.module';
 import { McpModule } from './domains/mcp/mcp.module';
+import { AuthModule } from './domains/auth/auth.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { McpModule } from './domains/mcp/mcp.module';
     RagModule,
     WorklogModule,
     McpModule,
+    AuthModule,
   ],
 })
 export class AppModule {}
