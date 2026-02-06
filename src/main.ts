@@ -18,7 +18,11 @@ async function bootstrap() {
 
   // CORS 설정
   app.enableCors({
-    origin: ['http://localhost:3000', 'https://job-clover.vercel.app'],
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'https://job-clover.vercel.app',
+    ],
     credentials: true,
   });
 

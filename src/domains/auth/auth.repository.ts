@@ -26,7 +26,7 @@ export class AuthRepository {
     });
 
     if (error) throw new Error(error.message);
-    return data.url!;
+    return data.url;
   }
 
   async exchangeCodeForSession(code: string): Promise<TokenPayload> {
