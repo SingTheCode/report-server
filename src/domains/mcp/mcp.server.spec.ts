@@ -23,7 +23,6 @@ describe('McpServer', () => {
           id: 'doc1',
           title: 'Test Title',
           content: 'Full content',
-          url: 'https://notion.so/doc1',
         },
       ]),
     };
@@ -79,7 +78,6 @@ describe('McpServer', () => {
         worklog: {
           title: 'Test Title',
           content: 'Full content',
-          url: 'https://notion.so/doc1',
         },
       });
     });
@@ -129,8 +127,8 @@ describe('McpServer', () => {
         ],
       });
       (mockWorklogRepo.findByIds as jest.Mock).mockResolvedValue([
-        { id: 'doc1', title: 'Title 1', content: 'Full 1', url: 'url1' },
-        { id: 'doc2', title: 'Title 2', content: 'Full 2', url: 'url2' },
+        { id: 'doc1', title: 'Title 1', content: 'Full 1' },
+        { id: 'doc2', title: 'Title 2', content: 'Full 2' },
       ]);
 
       // When

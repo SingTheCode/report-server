@@ -64,7 +64,9 @@ export class McpServer {
     }
   }
 
-  private async searchWorklog(args: SearchWorklogArgs): Promise<McpSearchResult> {
+  private async searchWorklog(
+    args: SearchWorklogArgs,
+  ): Promise<McpSearchResult> {
     const ragResult = await this.ragService.search({
       query: args.query,
       limit: args.limit ?? 5,
@@ -93,7 +95,6 @@ export class McpServer {
         worklog: {
           title: worklog?.title ?? '',
           content: worklog?.content ?? '',
-          url: worklog?.url,
         },
       };
     });
