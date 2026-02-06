@@ -50,7 +50,8 @@ describe('AuthRepository', () => {
     // Then: Google OAuth URL을 반환한다
     test('Google OAuth URL을 반환한다', async () => {
       // Given
-      const mockUrl = 'https://test.supabase.co/auth/v1/authorize?provider=google';
+      const mockUrl =
+        'https://test.supabase.co/auth/v1/authorize?provider=google';
       mockAuth.signInWithOAuth.mockResolvedValue({
         data: { url: mockUrl },
         error: null,
@@ -80,7 +81,9 @@ describe('AuthRepository', () => {
       });
 
       // When & Then
-      await expect(repository.getGoogleLoginUrl()).rejects.toThrow('OAuth error');
+      await expect(repository.getGoogleLoginUrl()).rejects.toThrow(
+        'OAuth error',
+      );
     });
   });
 
@@ -119,9 +122,9 @@ describe('AuthRepository', () => {
       });
 
       // When & Then
-      await expect(repository.exchangeCodeForSession('invalid')).rejects.toThrow(
-        'Invalid code',
-      );
+      await expect(
+        repository.exchangeCodeForSession('invalid'),
+      ).rejects.toThrow('Invalid code');
     });
   });
 
