@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { WorklogRepository } from './worklog.repository';
-import { SUPABASE_CLIENT } from '../../infrastructure/supabase/supabase.module';
+import { SUPABASE_ADMIN_CLIENT } from '../../infrastructure/supabase/supabase.module';
 
 describe('WorklogRepository', () => {
   let repository: WorklogRepository;
@@ -14,7 +14,7 @@ describe('WorklogRepository', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         WorklogRepository,
-        { provide: SUPABASE_CLIENT, useValue: mockClient },
+        { provide: SUPABASE_ADMIN_CLIENT, useValue: mockClient },
       ],
     }).compile();
 

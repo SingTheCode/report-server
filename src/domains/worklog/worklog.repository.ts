@@ -1,11 +1,11 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { SUPABASE_CLIENT } from '../../infrastructure/supabase/supabase.module';
+import { SUPABASE_ADMIN_CLIENT } from '../../infrastructure/supabase/supabase.module';
 import { Worklog } from './entities/worklog.entity';
 
 @Injectable()
 export class WorklogRepository {
-  constructor(@Inject(SUPABASE_CLIENT) private client: SupabaseClient) {}
+  constructor(@Inject(SUPABASE_ADMIN_CLIENT) private client: SupabaseClient) {}
 
   async saveWorklog(worklog: Partial<Worklog>): Promise<number> {
     const { data, error } = await this.client

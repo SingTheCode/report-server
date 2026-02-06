@@ -1,11 +1,11 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { SUPABASE_CLIENT } from '../../infrastructure/supabase/supabase.module';
+import { SUPABASE_ADMIN_CLIENT } from '../../infrastructure/supabase/supabase.module';
 import { Embedding } from './entities/embedding.entity';
 
 @Injectable()
 export class RagRepository {
-  constructor(@Inject(SUPABASE_CLIENT) private client: SupabaseClient) {}
+  constructor(@Inject(SUPABASE_ADMIN_CLIENT) private client: SupabaseClient) {}
 
   async saveEmbeddings(embeddings: Partial<Embedding>[]): Promise<void> {
     const { error } = await this.client

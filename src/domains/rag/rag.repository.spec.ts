@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RagRepository } from './rag.repository';
-import { SUPABASE_CLIENT } from '../../infrastructure/supabase/supabase.module';
+import { SUPABASE_ADMIN_CLIENT } from '../../infrastructure/supabase/supabase.module';
 
 describe('RagRepository', () => {
   let repository: RagRepository;
@@ -14,7 +14,7 @@ describe('RagRepository', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         RagRepository,
-        { provide: SUPABASE_CLIENT, useValue: mockClient },
+        { provide: SUPABASE_ADMIN_CLIENT, useValue: mockClient },
       ],
     }).compile();
 
