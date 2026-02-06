@@ -19,7 +19,6 @@ interface McpSearchResultItem {
   similarity: number;
   worklog: {
     title: string;
-    content: string;
     url?: string;
   };
 }
@@ -39,12 +38,23 @@ export class McpServer {
     return [
       {
         name: 'search_worklog',
-        description: '작업 기록에서 관련 내용을 검색합니다.',
+        description: `업무 일지(worklog)에서 의미적으로 유사한 내용을 검색합니다.
+벡터 임베딩 기반 시맨틱 검색을 수행하여 키워드 일치가 아닌 의미적 유사도로 결과를 반환합니다.
+사용 예시: 과거 작업 내역 조회, 유사 이슈 해결 사례 검색, 특정 기능 구현 히스토리 확인 등.
+결과는 유사도(similarity) 점수와 함께 반환되며, 동일 문서의 중복 결과는 자동으로 제거됩니다.`,
         inputSchema: {
           type: 'object',
           properties: {
-            query: { type: 'string', description: '검색 쿼리' },
-            limit: { type: 'number', description: '결과 개수 (기본값: 5)' },
+            query: {
+              type: 'string',
+              description:
+                '검색할 내용을 자연어로 입력합니다. 키워드보다는 문장 형태로 작성하면 더 정확한 결과를 얻을 수 있습니다. 예: "로그인 기능 구현 방법", "결제 오류 해결 사례"',
+            },
+            limit: {
+              type: 'number',
+              description:
+                '반환할 최대 결과 개수 (기본값: 5, 권장 범위: 3~10). 너무 많은 결과는 컨텍스트를 과도하게 소비할 수 있습니다.',
+            },
           },
           required: ['query'],
         },
@@ -94,7 +104,6 @@ export class McpServer {
         similarity: r.similarity,
         worklog: {
           title: worklog?.title ?? '',
-          content: worklog?.content ?? '',
         },
       };
     });

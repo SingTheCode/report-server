@@ -56,8 +56,8 @@ describe('McpServer', () => {
   describe('handleToolCall', () => {
     // Given: search_worklog 도구가 호출될 때
     // When: 쿼리를 전달하면
-    // Then: RAG 검색 결과와 worklog 정보를 함께 반환한다
-    test('search_worklog 호출 시 worklog 정보를 포함한 결과를 반환한다', async () => {
+    // Then: RAG 청크 content만 반환한다
+    test('search_worklog 호출 시 RAG 청크만 반환하고 worklog.content는 제외한다', async () => {
       // Given
       const toolName = 'search_worklog';
       const args = { query: 'test query', limit: 5 };
@@ -77,9 +77,10 @@ describe('McpServer', () => {
         similarity: 0.9,
         worklog: {
           title: 'Test Title',
-          content: 'Full content',
         },
       });
+      // worklog.content가 포함되지 않아야 함
+      expect(result.results[0].worklog).not.toHaveProperty('content');
     });
 
     // Given: 검색 결과가 없을 때
@@ -142,11 +143,16 @@ describe('McpServer', () => {
         documentId: 'doc1',
         content: 'chunk 2',
         similarity: 0.95,
+        worklog: { title: 'Title 1' },
       });
       expect(result.results[1]).toMatchObject({
         documentId: 'doc2',
         similarity: 0.8,
+        worklog: { title: 'Title 2' },
       });
+      // worklog.content가 포함되지 않아야 함
+      expect(result.results[0].worklog).not.toHaveProperty('content');
+      expect(result.results[1].worklog).not.toHaveProperty('content');
     });
   });
 });
