@@ -125,6 +125,34 @@ describe('WorklogRepository', () => {
     });
   });
 
+  describe('findByUserId', () => {
+    // Given: 사용자 ID가 주어졌을 때
+    // When: findByUserId를 호출하면
+    // Then: 해당 사용자의 worklog 목록(id, title, created_at)을 반환한다
+    test('사용자 ID로 worklog 목록을 조회한다 (id, title, created_at만)', async () => {
+      // Given
+      const userId = 'user-123';
+      const worklogs = [
+        { id: 1, title: 'Test1', created_at: '2024-01-01' },
+        { id: 2, title: 'Test2', created_at: '2024-01-02' },
+      ];
+      mockClient.from.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          eq: jest.fn().mockReturnValue({
+            order: jest.fn().mockResolvedValue({ data: worklogs, error: null }),
+          }),
+        }),
+      });
+
+      // When
+      const result = await repository.findByUserId(userId);
+
+      // Then
+      expect(result).toEqual(worklogs);
+      expect(mockClient.from).toHaveBeenCalledWith('worklogs');
+    });
+  });
+
   describe('getStatus', () => {
     // Given: worklog가 저장되어 있을 때
     // When: getStatus를 호출하면

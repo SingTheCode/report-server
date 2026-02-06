@@ -9,6 +9,7 @@ import {
   UploadProgressOutput,
   UploadResultOutput,
 } from './dto/output/upload-worklogs.output';
+import { Worklog } from './entities/worklog.entity';
 
 @Injectable()
 export class WorklogService {
@@ -23,6 +24,12 @@ export class WorklogService {
 
   private sanitizeContent(content: string): string {
     return content.replace(/!\[.*?\]\(data:image\/[^)]+\)/g, '[이미지 제거됨]');
+  }
+
+  async getWorklogsByUserId(
+    userId: string,
+  ): Promise<Pick<Worklog, 'id' | 'title' | 'created_at'>[]> {
+    return this.worklogRepo.findByUserId(userId);
   }
 
   async uploadFiles(

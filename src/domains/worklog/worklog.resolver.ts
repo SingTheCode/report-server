@@ -5,6 +5,7 @@ import {
   UploadWorklogsOutput,
   UploadProgressOutput,
 } from './dto/output/upload-worklogs.output';
+import { WorklogListOutput } from './dto/output/worklog-list.output';
 import { ObjectType, Field } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { AuthGuard } from '../../common/guards/auth.guard';
@@ -22,6 +23,22 @@ export class WorklogResolver {
   @Query(() => HealthOutput)
   health(): HealthOutput {
     return { ok: true };
+  }
+
+  @Query(() => WorklogListOutput)
+  @UseGuards(AuthGuard)
+  async worklogs(
+    @Context('req') req: { user: { id: string } },
+  ): Promise<WorklogListOutput> {
+    const worklogs = await this.worklogService.getWorklogsByUserId(req.user.id);
+    return {
+      worklogs: worklogs.map((w) => ({
+        id: w.id!,
+        title: w.title,
+        createdAt: w.created_at!,
+      })),
+      total: worklogs.length,
+    };
   }
 
   @Mutation(() => UploadWorklogsOutput)

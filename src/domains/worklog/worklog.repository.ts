@@ -41,6 +41,18 @@ export class WorklogRepository {
     return data;
   }
 
+  async findByUserId(
+    userId: string,
+  ): Promise<Pick<Worklog, 'id' | 'title' | 'created_at'>[]> {
+    const { data, error } = await this.client
+      .from('worklogs')
+      .select('id, title, created_at')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    return data;
+  }
+
   async getStatus() {
     const { count, error } = await this.client
       .from('worklogs')

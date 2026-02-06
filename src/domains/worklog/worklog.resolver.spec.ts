@@ -12,6 +12,7 @@ describe('WorklogResolver', () => {
       uploadFiles: jest.fn(),
       createProgressStream: jest.fn(),
       emitProgress: jest.fn(),
+      getWorklogsByUserId: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -25,6 +26,38 @@ describe('WorklogResolver', () => {
       .compile();
 
     resolver = module.get<WorklogResolver>(WorklogResolver);
+  });
+
+  describe('worklogs', () => {
+    // Given: 인증된 사용자가 요청할 때
+    // When: worklogs query를 호출하면
+    // Then: 해당 사용자의 worklog 목록을 반환한다
+    test('사용자의 worklog 목록을 반환한다', async () => {
+      // Given
+      const mockReq = { user: { id: 'user-123' } };
+      const mockWorklogs = [
+        { id: 1, title: 'Test1', created_at: '2024-01-01' },
+        { id: 2, title: 'Test2', created_at: '2024-01-02' },
+      ];
+      (mockWorklogService.getWorklogsByUserId as jest.Mock).mockResolvedValue(
+        mockWorklogs,
+      );
+
+      // When
+      const result = await resolver.worklogs(mockReq);
+
+      // Then
+      expect(result.total).toBe(2);
+      expect(result.worklogs).toHaveLength(2);
+      expect(result.worklogs[0]).toEqual({
+        id: 1,
+        title: 'Test1',
+        createdAt: '2024-01-01',
+      });
+      expect(mockWorklogService.getWorklogsByUserId).toHaveBeenCalledWith(
+        'user-123',
+      );
+    });
   });
 
   describe('uploadWorklogs', () => {

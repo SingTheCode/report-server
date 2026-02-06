@@ -11,6 +11,7 @@ describe('WorklogService', () => {
   beforeEach(async () => {
     mockWorklogRepo = {
       saveWorklog: jest.fn().mockResolvedValue(1),
+      findByUserId: jest.fn(),
     };
 
     mockRagService = {
@@ -218,6 +219,28 @@ describe('WorklogService', () => {
       expect(result.failedCount).toBe(1);
       expect(result.failedFiles[0].filename).toBe('error.md');
       expect(result.successFiles[0].filename).toBe('success.md');
+    });
+  });
+
+  describe('getWorklogsByUserId', () => {
+    // Given: 사용자 ID가 주어졌을 때
+    // When: getWorklogsByUserId를 호출하면
+    // Then: 해당 사용자의 worklog 목록을 반환한다
+    test('사용자 ID로 worklog 목록을 조회한다', async () => {
+      // Given
+      const userId = 'user-123';
+      const worklogs = [
+        { id: 1, title: 'Test1', created_at: '2024-01-01' },
+        { id: 2, title: 'Test2', created_at: '2024-01-02' },
+      ];
+      (mockWorklogRepo.findByUserId as jest.Mock).mockResolvedValue(worklogs);
+
+      // When
+      const result = await service.getWorklogsByUserId(userId);
+
+      // Then
+      expect(result).toEqual(worklogs);
+      expect(mockWorklogRepo.findByUserId).toHaveBeenCalledWith(userId);
     });
   });
 
