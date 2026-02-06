@@ -1,25 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { RagRepository } from './rag.repository';
-import { Embedding } from './entities/embedding.entity';
+import { SUPABASE_CLIENT } from '../../infrastructure/supabase/supabase.module';
 
 describe('RagRepository', () => {
   let repository: RagRepository;
-  let mockEmbRepo: Partial<Repository<Embedding>>;
+  let mockClient: any;
 
   beforeEach(async () => {
-    mockEmbRepo = {
-      save: jest.fn(),
-      find: jest.fn(),
-      delete: jest.fn(),
-      count: jest.fn(),
+    mockClient = {
+      from: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         RagRepository,
-        { provide: getRepositoryToken(Embedding), useValue: mockEmbRepo },
+        { provide: SUPABASE_CLIENT, useValue: mockClient },
       ],
     }).compile();
 
@@ -29,18 +24,21 @@ describe('RagRepository', () => {
   describe('saveEmbeddings', () => {
     // Given: 임베딩 배열이 주어졌을 때
     // When: saveEmbeddings를 호출하면
-    // Then: embRepo.save가 호출된다
+    // Then: supabase client의 upsert가 호출된다
     test('임베딩을 저장한다', async () => {
       // Given
       const embeddings = [
-        { documentId: 'doc1', chunkIndex: 0, content: 'chunk', vector: [0.1] },
+        { document_id: 'doc1', chunk_index: 0, content: 'chunk', vector: [0.1] },
       ];
+      mockClient.from.mockReturnValue({
+        upsert: jest.fn().mockResolvedValue({ error: null }),
+      });
 
       // When
       await repository.saveEmbeddings(embeddings);
 
       // Then
-      expect(mockEmbRepo.save).toHaveBeenCalledWith(embeddings);
+      expect(mockClient.from).toHaveBeenCalledWith('embeddings');
     });
   });
 
@@ -50,13 +48,17 @@ describe('RagRepository', () => {
     // Then: 해당 문서의 임베딩이 삭제된다
     test('문서 ID로 임베딩을 삭제한다', async () => {
       // Given
-      const documentId = 'doc1';
+      mockClient.from.mockReturnValue({
+        delete: jest.fn().mockReturnValue({
+          eq: jest.fn().mockResolvedValue({ error: null }),
+        }),
+      });
 
       // When
-      await repository.deleteByDocumentId(documentId);
+      await repository.deleteByDocumentId('doc1');
 
       // Then
-      expect(mockEmbRepo.delete).toHaveBeenCalledWith({ documentId });
+      expect(mockClient.from).toHaveBeenCalledWith('embeddings');
     });
   });
 
@@ -66,8 +68,10 @@ describe('RagRepository', () => {
     // Then: 모든 임베딩을 반환한다
     test('모든 임베딩을 조회한다', async () => {
       // Given
-      const embeddings = [{ id: 1, documentId: 'doc1', vector: [0.1] }];
-      (mockEmbRepo.find as jest.Mock).mockResolvedValue(embeddings);
+      const embeddings = [{ id: 1, document_id: 'doc1', vector: [0.1] }];
+      mockClient.from.mockReturnValue({
+        select: jest.fn().mockResolvedValue({ data: embeddings, error: null }),
+      });
 
       // When
       const result = await repository.findAllEmbeddings();
@@ -83,7 +87,9 @@ describe('RagRepository', () => {
     // Then: 총 임베딩 수를 반환한다
     test('상태 정보를 반환한다', async () => {
       // Given
-      (mockEmbRepo.count as jest.Mock).mockResolvedValue(15);
+      mockClient.from.mockReturnValue({
+        select: jest.fn().mockResolvedValue({ count: 15, error: null }),
+      });
 
       // When
       const result = await repository.getStatus();

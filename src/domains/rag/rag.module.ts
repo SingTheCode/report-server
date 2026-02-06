@@ -1,12 +1,11 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { SupabaseModule } from '../../infrastructure/supabase/supabase.module';
 import { RagService } from './rag.service';
 import { RagRepository } from './rag.repository';
-import { Embedding } from './entities/embedding.entity';
 import { OpenAiModule } from '../../infrastructure/openai/openai.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Embedding]), OpenAiModule],
+  imports: [SupabaseModule, OpenAiModule],
   providers: [RagService, RagRepository],
   exports: [RagService],
 })

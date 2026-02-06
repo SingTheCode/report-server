@@ -1,25 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { WorklogRepository } from './worklog.repository';
-import { Worklog } from './entities/worklog.entity';
+import { SUPABASE_CLIENT } from '../../infrastructure/supabase/supabase.module';
 
 describe('WorklogRepository', () => {
   let repository: WorklogRepository;
-  let mockRepo: Partial<Repository<Worklog>>;
+  let mockClient: any;
 
   beforeEach(async () => {
-    mockRepo = {
-      save: jest.fn(),
-      find: jest.fn(),
-      findOne: jest.fn(),
-      count: jest.fn(),
+    mockClient = {
+      from: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         WorklogRepository,
-        { provide: getRepositoryToken(Worklog), useValue: mockRepo },
+        { provide: SUPABASE_CLIENT, useValue: mockClient },
       ],
     }).compile();
 
@@ -29,38 +24,19 @@ describe('WorklogRepository', () => {
   describe('saveWorklog', () => {
     // Given: worklog 데이터가 주어졌을 때
     // When: saveWorklog를 호출하면
-    // Then: repo.save가 호출된다
+    // Then: supabase client의 upsert가 호출된다
     test('worklog를 저장한다', async () => {
       // Given
       const worklog = { id: 'page1', title: 'Test', content: 'content' };
+      mockClient.from.mockReturnValue({
+        upsert: jest.fn().mockResolvedValue({ error: null }),
+      });
 
       // When
       await repository.saveWorklog(worklog);
 
       // Then
-      expect(mockRepo.save).toHaveBeenCalledWith(worklog);
-    });
-
-    // Given: createdAt이 포함된 worklog가 주어졌을 때
-    // When: saveWorklog를 호출하면
-    // Then: createdAt이 포함되어 저장된다
-    test('createdAt 필드를 포함하여 저장한다', async () => {
-      // Given
-      const createdAt = new Date('2026-01-01');
-      const worklog = {
-        id: 'page1',
-        title: 'Test',
-        content: 'content',
-        createdAt,
-      };
-
-      // When
-      await repository.saveWorklog(worklog);
-
-      // Then
-      expect(mockRepo.save).toHaveBeenCalledWith(
-        expect.objectContaining({ createdAt }),
-      );
+      expect(mockClient.from).toHaveBeenCalledWith('worklogs');
     });
   });
 
@@ -74,12 +50,15 @@ describe('WorklogRepository', () => {
         { id: 'page1', title: 'Test1', content: 'content1' },
         { id: 'page2', title: 'Test2', content: 'content2' },
       ];
+      mockClient.from.mockReturnValue({
+        upsert: jest.fn().mockResolvedValue({ error: null }),
+      });
 
       // When
       await repository.saveWorklogs(worklogs);
 
       // Then
-      expect(mockRepo.save).toHaveBeenCalledWith(worklogs);
+      expect(mockClient.from).toHaveBeenCalledWith('worklogs');
     });
   });
 
@@ -90,10 +69,44 @@ describe('WorklogRepository', () => {
     test('모든 worklog를 조회한다', async () => {
       // Given
       const worklogs = [{ id: 'page1', title: 'Test' }];
-      (mockRepo.find as jest.Mock).mockResolvedValue(worklogs);
+      mockClient.from.mockReturnValue({
+        select: jest.fn().mockResolvedValue({ data: worklogs, error: null }),
+      });
 
       // When
       const result = await repository.findAll();
+
+      // Then
+      expect(result).toEqual(worklogs);
+    });
+  });
+
+  describe('findByIds', () => {
+    // Given: 빈 ID 배열이 주어졌을 때
+    // When: findByIds를 호출하면
+    // Then: 빈 배열을 반환한다
+    test('빈 ID 배열이면 빈 배열을 반환한다', async () => {
+      // When
+      const result = await repository.findByIds([]);
+
+      // Then
+      expect(result).toEqual([]);
+    });
+
+    // Given: 여러 worklog ID가 주어졌을 때
+    // When: findByIds를 호출하면
+    // Then: 해당 ID의 worklog들을 반환한다
+    test('ID 목록으로 worklog를 조회한다', async () => {
+      // Given
+      const worklogs = [{ id: 'page1' }, { id: 'page2' }];
+      mockClient.from.mockReturnValue({
+        select: jest.fn().mockReturnValue({
+          in: jest.fn().mockResolvedValue({ data: worklogs, error: null }),
+        }),
+      });
+
+      // When
+      const result = await repository.findByIds(['page1', 'page2']);
 
       // Then
       expect(result).toEqual(worklogs);
@@ -106,48 +119,15 @@ describe('WorklogRepository', () => {
     // Then: 총 worklog 수를 반환한다
     test('상태 정보를 반환한다', async () => {
       // Given
-      (mockRepo.count as jest.Mock).mockResolvedValue(10);
+      mockClient.from.mockReturnValue({
+        select: jest.fn().mockResolvedValue({ count: 10, error: null }),
+      });
 
       // When
       const result = await repository.getStatus();
 
       // Then
       expect(result).toEqual({ totalWorklogs: 10 });
-    });
-  });
-
-  describe('findByIds', () => {
-    // Given: 여러 worklog ID가 주어졌을 때
-    // When: findByIds를 호출하면
-    // Then: 해당 ID의 worklog들을 반환한다
-    test('ID 목록으로 worklog를 조회한다', async () => {
-      // Given
-      const worklogs = [
-        { id: 'page1', title: 'Test1', content: 'content1' },
-        { id: 'page2', title: 'Test2', content: 'content2' },
-      ];
-      (mockRepo.find as jest.Mock).mockResolvedValue(worklogs);
-
-      // When
-      const result = await repository.findByIds(['page1', 'page2']);
-
-      // Then
-      expect(mockRepo.find).toHaveBeenCalledWith({
-        where: { id: expect.anything() },
-      });
-      expect(result).toEqual(worklogs);
-    });
-
-    // Given: 빈 ID 배열이 주어졌을 때
-    // When: findByIds를 호출하면
-    // Then: 빈 배열을 반환한다
-    test('빈 ID 배열이면 빈 배열을 반환한다', async () => {
-      // When
-      const result = await repository.findByIds([]);
-
-      // Then
-      expect(mockRepo.find).not.toHaveBeenCalled();
-      expect(result).toEqual([]);
     });
   });
 });

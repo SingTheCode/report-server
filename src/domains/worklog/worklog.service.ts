@@ -76,7 +76,7 @@ export class WorklogService {
             id: docId,
             title: file.filename,
             content,
-            syncedAt: new Date(),
+            synced_at: new Date().toISOString(),
           },
         ]);
 

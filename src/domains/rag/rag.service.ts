@@ -60,8 +60,8 @@ export class RagService {
       const vectors = await this.openai.embedBatchSafe(chunks);
 
       const embeddings = chunks.map((content, i) => ({
-        documentId: doc.id,
-        chunkIndex: i,
+        document_id: doc.id,
+        chunk_index: i,
         content,
         vector: this.normalize(vectors[i]),
       }));
@@ -99,7 +99,7 @@ export class RagService {
 
     const results = embeddings
       .map((e) => ({
-        documentId: e.documentId,
+        documentId: e.document_id,
         content: e.content,
         similarity: this.dot(qv, e.vector),
       }))

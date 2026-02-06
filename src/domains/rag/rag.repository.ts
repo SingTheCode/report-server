@@ -1,29 +1,38 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Injectable, Inject } from '@nestjs/common';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { SUPABASE_CLIENT } from '../../infrastructure/supabase/supabase.module';
 import { Embedding } from './entities/embedding.entity';
 
 @Injectable()
 export class RagRepository {
-  constructor(
-    @InjectRepository(Embedding)
-    private embRepo: Repository<Embedding>,
-  ) {}
+  constructor(@Inject(SUPABASE_CLIENT) private client: SupabaseClient) {}
 
   async saveEmbeddings(embeddings: Partial<Embedding>[]): Promise<void> {
-    await this.embRepo.save(embeddings);
+    const { error } = await this.client
+      .from('embeddings')
+      .upsert(embeddings, { onConflict: 'document_id,chunk_index' });
+    if (error) throw new Error(error.message);
   }
 
   async deleteByDocumentId(documentId: string): Promise<void> {
-    await this.embRepo.delete({ documentId });
+    const { error } = await this.client
+      .from('embeddings')
+      .delete()
+      .eq('document_id', documentId);
+    if (error) throw new Error(error.message);
   }
 
   async findAllEmbeddings(): Promise<Embedding[]> {
-    return this.embRepo.find();
+    const { data, error } = await this.client.from('embeddings').select('*');
+    if (error) throw new Error(error.message);
+    return data;
   }
 
   async getStatus() {
-    const totalEmbeddings = await this.embRepo.count();
-    return { totalEmbeddings };
+    const { count, error } = await this.client
+      .from('embeddings')
+      .select('*', { count: 'exact', head: true });
+    if (error) throw new Error(error.message);
+    return { totalEmbeddings: count ?? 0 };
   }
 }

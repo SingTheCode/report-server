@@ -87,8 +87,8 @@ describe('RagService', () => {
     test('쿼리와 유사한 문서를 검색한다', async () => {
       // Given
       const embeddings = [
-        { documentId: 'doc1', content: 'content 1', vector: [0.1, 0.2, 0.3] },
-        { documentId: 'doc2', content: 'content 2', vector: [0.9, 0.8, 0.7] },
+        { document_id: 'doc1', content: 'content 1', vector: [0.1, 0.2, 0.3] },
+        { document_id: 'doc2', content: 'content 2', vector: [0.9, 0.8, 0.7] },
       ];
       (mockRagRepo.findAllEmbeddings as jest.Mock).mockResolvedValue(
         embeddings,
@@ -109,7 +109,7 @@ describe('RagService', () => {
     test('동일 쿼리는 캐시된 결과를 반환한다', async () => {
       // Given
       const embeddings = [
-        { documentId: 'doc1', content: 'content', vector: [0.1, 0.2, 0.3] },
+        { document_id: 'doc1', content: 'content', vector: [0.1, 0.2, 0.3] },
       ];
       (mockRagRepo.findAllEmbeddings as jest.Mock).mockResolvedValue(
         embeddings,

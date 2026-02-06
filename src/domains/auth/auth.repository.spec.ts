@@ -138,7 +138,7 @@ describe('AuthRepository', () => {
             email: 'test@test.com',
             user_metadata: {
               full_name: 'Test User',
-              avatar_url: 'https://avatar.url',
+              picture: 'https://avatar.url',
             },
           },
         },

@@ -1,34 +1,47 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { Injectable, Inject } from '@nestjs/common';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { SUPABASE_CLIENT } from '../../infrastructure/supabase/supabase.module';
 import { Worklog } from './entities/worklog.entity';
 
 @Injectable()
 export class WorklogRepository {
-  constructor(
-    @InjectRepository(Worklog)
-    private repo: Repository<Worklog>,
-  ) {}
+  constructor(@Inject(SUPABASE_CLIENT) private client: SupabaseClient) {}
 
   async saveWorklog(worklog: Partial<Worklog>): Promise<void> {
-    await this.repo.save(worklog);
+    const { error } = await this.client
+      .from('worklogs')
+      .upsert(worklog, { onConflict: 'id' });
+    if (error) throw new Error(error.message);
   }
 
   async saveWorklogs(worklogs: Partial<Worklog>[]): Promise<void> {
-    await this.repo.save(worklogs);
+    const { error } = await this.client
+      .from('worklogs')
+      .upsert(worklogs, { onConflict: 'id' });
+    if (error) throw new Error(error.message);
   }
 
   async findAll(): Promise<Worklog[]> {
-    return this.repo.find();
+    const { data, error } = await this.client.from('worklogs').select('*');
+    if (error) throw new Error(error.message);
+    return data;
   }
 
   async findByIds(ids: string[]): Promise<Worklog[]> {
     if (ids.length === 0) return [];
-    return this.repo.find({ where: { id: In(ids) } });
+    const { data, error } = await this.client
+      .from('worklogs')
+      .select('*')
+      .in('id', ids);
+    if (error) throw new Error(error.message);
+    return data;
   }
 
   async getStatus() {
-    const totalWorklogs = await this.repo.count();
-    return { totalWorklogs };
+    const { count, error } = await this.client
+      .from('worklogs')
+      .select('*', { count: 'exact', head: true });
+    if (error) throw new Error(error.message);
+    return { totalWorklogs: count ?? 0 };
   }
 }

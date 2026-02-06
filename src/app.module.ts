@@ -3,7 +3,6 @@ import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
-import { DatabaseModule } from './infrastructure/database/database.module';
 import { OpenAiModule } from './infrastructure/openai/openai.module';
 import { RagModule } from './domains/rag/rag.module';
 import { WorklogModule } from './domains/worklog/worklog.module';
@@ -25,7 +24,6 @@ import { AuthModule } from './domains/auth/auth.module';
     }),
 
     // Infrastructure
-    DatabaseModule,
     OpenAiModule,
 
     // Domains
