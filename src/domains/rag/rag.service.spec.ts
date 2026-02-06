@@ -43,16 +43,14 @@ describe('RagService', () => {
     test('문서를 임베딩으로 변환하여 저장한다', async () => {
       // Given
       const input = {
-        documents: [
-          { id: 'doc1', content: 'test content', title: 'test title' },
-        ],
+        documents: [{ id: 1, content: 'test content', title: 'test title' }],
       };
 
       // When
       const result = await service.buildEmbeddings(input);
 
       // Then
-      expect(mockRagRepo.deleteByDocumentId).toHaveBeenCalledWith('doc1');
+      expect(mockRagRepo.deleteByDocumentId).toHaveBeenCalledWith(1);
       expect(mockOpenAi.embedBatchSafe).toHaveBeenCalled();
       expect(mockRagRepo.saveEmbeddings).toHaveBeenCalled();
       expect(result.success).toBe(true);
@@ -66,8 +64,8 @@ describe('RagService', () => {
       // Given
       const input = {
         documents: [
-          { id: 'doc1', content: 'content 1', title: 'test content' },
-          { id: 'doc2', content: 'content 2', title: 'test content' },
+          { id: 1, content: 'content 1', title: 'test content' },
+          { id: 2, content: 'content 2', title: 'test content' },
         ],
       };
 
@@ -87,7 +85,7 @@ describe('RagService', () => {
     test('쿼리와 유사한 문서를 검색한다', async () => {
       // Given
       const embeddings = [
-        { document_id: 'doc1', content: 'content 1', vector: [0.1, 0.2, 0.3] },
+        { document_id: 1, content: 'content 1', vector: [0.1, 0.2, 0.3] },
         { document_id: 'doc2', content: 'content 2', vector: [0.9, 0.8, 0.7] },
       ];
       (mockRagRepo.findAllEmbeddings as jest.Mock).mockResolvedValue(
@@ -109,7 +107,7 @@ describe('RagService', () => {
     test('동일 쿼리는 캐시된 결과를 반환한다', async () => {
       // Given
       const embeddings = [
-        { document_id: 'doc1', content: 'content', vector: [0.1, 0.2, 0.3] },
+        { document_id: 1, content: 'content', vector: [0.1, 0.2, 0.3] },
       ];
       (mockRagRepo.findAllEmbeddings as jest.Mock).mockResolvedValue(
         embeddings,

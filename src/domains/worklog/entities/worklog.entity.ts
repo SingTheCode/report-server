@@ -1,7 +1,8 @@
 export interface Worklog {
-  id: string;
+  id?: number;
   title: string;
   content: string;
   created_at?: string;
   synced_at?: string;
+  user_id: string;
 }

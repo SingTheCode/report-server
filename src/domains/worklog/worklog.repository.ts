@@ -7,18 +7,22 @@ import { Worklog } from './entities/worklog.entity';
 export class WorklogRepository {
   constructor(@Inject(SUPABASE_CLIENT) private client: SupabaseClient) {}
 
-  async saveWorklog(worklog: Partial<Worklog>): Promise<void> {
-    const { error } = await this.client
+  async saveWorklog(worklog: Partial<Worklog>): Promise<number> {
+    const { data, error } = await this.client
       .from('worklogs')
-      .upsert(worklog, { onConflict: 'id' });
+      .insert(worklog)
+      .select('id');
     if (error) throw new Error(error.message);
+    return data[0].id;
   }
 
-  async saveWorklogs(worklogs: Partial<Worklog>[]): Promise<void> {
-    const { error } = await this.client
+  async saveWorklogs(worklogs: Partial<Worklog>[]): Promise<number[]> {
+    const { data, error } = await this.client
       .from('worklogs')
-      .upsert(worklogs, { onConflict: 'id' });
+      .insert(worklogs)
+      .select('id');
     if (error) throw new Error(error.message);
+    return data.map((d) => d.id);
   }
 
   async findAll(): Promise<Worklog[]> {
@@ -27,7 +31,7 @@ export class WorklogRepository {
     return data;
   }
 
-  async findByIds(ids: string[]): Promise<Worklog[]> {
+  async findByIds(ids: number[]): Promise<Worklog[]> {
     if (ids.length === 0) return [];
     const { data, error } = await this.client
       .from('worklogs')

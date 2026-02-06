@@ -24,18 +24,24 @@ describe('WorklogRepository', () => {
   describe('saveWorklog', () => {
     // Given: worklog 데이터가 주어졌을 때
     // When: saveWorklog를 호출하면
-    // Then: supabase client의 upsert가 호출된다
-    test('worklog를 저장한다', async () => {
+    // Then: 저장 후 생성된 id를 반환한다
+    test('worklog를 저장하고 생성된 id를 반환한다', async () => {
       // Given
-      const worklog = { id: 'page1', title: 'Test', content: 'content' };
+      const worklog = { title: 'Test', content: 'content', user_id: 'user-1' };
       mockClient.from.mockReturnValue({
-        upsert: jest.fn().mockResolvedValue({ error: null }),
+        insert: jest.fn().mockReturnValue({
+          select: jest.fn().mockResolvedValue({
+            data: [{ id: 1 }],
+            error: null,
+          }),
+        }),
       });
 
       // When
-      await repository.saveWorklog(worklog);
+      const result = await repository.saveWorklog(worklog);
 
       // Then
+      expect(result).toBe(1);
       expect(mockClient.from).toHaveBeenCalledWith('worklogs');
     });
   });
@@ -43,21 +49,27 @@ describe('WorklogRepository', () => {
   describe('saveWorklogs', () => {
     // Given: 여러 worklog가 주어졌을 때
     // When: saveWorklogs를 호출하면
-    // Then: 모든 worklog가 저장된다
-    test('여러 worklog를 저장한다', async () => {
+    // Then: 저장 후 생성된 id 배열을 반환한다
+    test('여러 worklog를 저장하고 생성된 id 배열을 반환한다', async () => {
       // Given
       const worklogs = [
-        { id: 'page1', title: 'Test1', content: 'content1' },
-        { id: 'page2', title: 'Test2', content: 'content2' },
+        { title: 'Test1', content: 'content1', user_id: 'user-1' },
+        { title: 'Test2', content: 'content2', user_id: 'user-1' },
       ];
       mockClient.from.mockReturnValue({
-        upsert: jest.fn().mockResolvedValue({ error: null }),
+        insert: jest.fn().mockReturnValue({
+          select: jest.fn().mockResolvedValue({
+            data: [{ id: 1 }, { id: 2 }],
+            error: null,
+          }),
+        }),
       });
 
       // When
-      await repository.saveWorklogs(worklogs);
+      const result = await repository.saveWorklogs(worklogs);
 
       // Then
+      expect(result).toEqual([1, 2]);
       expect(mockClient.from).toHaveBeenCalledWith('worklogs');
     });
   });
@@ -98,7 +110,7 @@ describe('WorklogRepository', () => {
     // Then: 해당 ID의 worklog들을 반환한다
     test('ID 목록으로 worklog를 조회한다', async () => {
       // Given
-      const worklogs = [{ id: 'page1' }, { id: 'page2' }];
+      const worklogs = [{ id: 1 }, { id: 2 }];
       mockClient.from.mockReturnValue({
         select: jest.fn().mockReturnValue({
           in: jest.fn().mockResolvedValue({ data: worklogs, error: null }),
@@ -106,7 +118,7 @@ describe('WorklogRepository', () => {
       });
 
       // When
-      const result = await repository.findByIds(['page1', 'page2']);
+      const result = await repository.findByIds([1, 2]);
 
       // Then
       expect(result).toEqual(worklogs);

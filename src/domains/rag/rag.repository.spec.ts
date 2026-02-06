@@ -28,7 +28,7 @@ describe('RagRepository', () => {
     test('임베딩을 저장한다', async () => {
       // Given
       const embeddings = [
-        { document_id: 'doc1', chunk_index: 0, content: 'chunk', vector: [0.1] },
+        { document_id: 1, chunk_index: 0, content: 'chunk', vector: [0.1] },
       ];
       mockClient.from.mockReturnValue({
         upsert: jest.fn().mockResolvedValue({ error: null }),
@@ -55,7 +55,7 @@ describe('RagRepository', () => {
       });
 
       // When
-      await repository.deleteByDocumentId('doc1');
+      await repository.deleteByDocumentId(1);
 
       // Then
       expect(mockClient.from).toHaveBeenCalledWith('embeddings');
@@ -68,7 +68,7 @@ describe('RagRepository', () => {
     // Then: 모든 임베딩을 반환한다
     test('모든 임베딩을 조회한다', async () => {
       // Given
-      const embeddings = [{ id: 1, document_id: 'doc1', vector: [0.1] }];
+      const embeddings = [{ id: 1, document_id: 1, vector: [0.1] }];
       mockClient.from.mockReturnValue({
         select: jest.fn().mockResolvedValue({ data: embeddings, error: null }),
       });

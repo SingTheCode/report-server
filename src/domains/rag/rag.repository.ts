@@ -14,7 +14,7 @@ export class RagRepository {
     if (error) throw new Error(error.message);
   }
 
-  async deleteByDocumentId(documentId: string): Promise<void> {
+  async deleteByDocumentId(documentId: number): Promise<void> {
     const { error } = await this.client
       .from('embeddings')
       .delete()

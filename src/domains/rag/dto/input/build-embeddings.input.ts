@@ -1,21 +1,16 @@
-import { Field, InputType } from '@nestjs/graphql';
+import { Field, InputType, Int } from '@nestjs/graphql';
 import { IsArray, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 @InputType()
 class DocumentInput {
-  @Field()
-  @IsString()
-  id: string;
+  @Field(() => Int, { nullable: true })
+  @IsOptional()
+  id?: number;
 
   @Field()
   @IsString()
   content: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  title: string;
 }
 
 @InputType()

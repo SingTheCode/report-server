@@ -1,9 +1,9 @@
-import { Field, Float, ObjectType } from '@nestjs/graphql';
+import { Field, Float, Int, ObjectType } from '@nestjs/graphql';
 
 @ObjectType()
 export class SearchResultItem {
-  @Field()
-  documentId: string;
+  @Field(() => Int)
+  documentId: number;
 
   @Field()
   content: string;

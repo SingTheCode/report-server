@@ -14,7 +14,7 @@ interface SearchWorklogArgs {
 }
 
 interface McpSearchResultItem {
-  documentId: string;
+  documentId: number;
   content: string;
   similarity: number;
   worklog: {
@@ -73,7 +73,7 @@ export class McpServer {
     });
 
     // 동일 documentId 중 유사도가 가장 높은 결과만 유지
-    const bestByDocId = new Map<string, (typeof ragResult.results)[0]>();
+    const bestByDocId = new Map<number, (typeof ragResult.results)[0]>();
     for (const r of ragResult.results) {
       const existing = bestByDocId.get(r.documentId);
       if (!existing || r.similarity > existing.similarity) {

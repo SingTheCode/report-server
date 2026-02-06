@@ -58,6 +58,14 @@ export class WorklogService {
           continue;
         }
 
+        // Worklog 먼저 저장하여 id 획득
+        const worklogId = await this.worklogRepo.saveWorklog({
+          title: file.filename,
+          content,
+          user_id: input.user_id,
+          synced_at: new Date().toISOString(),
+        });
+
         onProgress?.({
           totalFiles,
           processedFiles: i,
@@ -66,19 +74,10 @@ export class WorklogService {
           status: 'embedding',
         });
 
-        const docId = randomUUID();
+        // 반환된 id로 임베딩 생성
         await this.ragService.buildEmbeddings({
-          documents: [{ id: docId, content, title: file.filename }],
+          documents: [{ id: worklogId, content }],
         });
-
-        await this.worklogRepo.saveWorklogs([
-          {
-            id: docId,
-            title: file.filename,
-            content,
-            synced_at: new Date().toISOString(),
-          },
-        ]);
 
         successFiles.push({ filename: file.filename });
       } catch (error) {

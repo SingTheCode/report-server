@@ -40,7 +40,8 @@ describe('WorklogController', () => {
       // Then
       const receivedData: Array<{ data: UploadProgressOutput }> = [];
       stream.subscribe({
-        next: (event) => receivedData.push(event),
+        next: (event) =>
+          receivedData.push(event as { data: UploadProgressOutput }),
         complete: () => {
           expect(receivedData).toHaveLength(2);
           expect(receivedData[0].data.progress).toBe(0.5);

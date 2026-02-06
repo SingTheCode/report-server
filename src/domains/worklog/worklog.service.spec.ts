@@ -10,7 +10,7 @@ describe('WorklogService', () => {
 
   beforeEach(async () => {
     mockWorklogRepo = {
-      saveWorklogs: jest.fn(),
+      saveWorklog: jest.fn().mockResolvedValue(1),
     };
 
     mockRagService = {
@@ -35,26 +35,32 @@ describe('WorklogService', () => {
   describe('uploadFiles', () => {
     // Given: 파일이 업로드될 때
     // When: uploadFiles를 호출하면
-    // Then: 파일을 파싱하고 임베딩을 생성하여 저장한다
-    test('파일을 업로드하고 임베딩을 생성한다', async () => {
+    // Then: Worklog 먼저 저장 후 반환된 id로 임베딩을 생성한다
+    test('Worklog 저장 후 반환된 id로 임베딩을 생성한다', async () => {
       // Given
       const mockFile = {
         filename: 'test.md',
         content: '# Test Content\nThis is test content.',
+        user_id: 'user-1',
       };
 
       // When
       const result = await service.uploadFiles({
         files: [mockFile],
+        user_id: 'user-1',
       });
 
       // Then
       expect(result.successCount).toBe(1);
-      expect(result.failedCount).toBe(0);
-      expect(result.successFiles).toHaveLength(1);
-      expect(result.successFiles[0].filename).toBe('test.md');
-      expect(mockRagService.buildEmbeddings).toHaveBeenCalled();
-      expect(mockWorklogRepo.saveWorklogs).toHaveBeenCalled();
+      expect(mockWorklogRepo.saveWorklog).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'test.md',
+          user_id: 'user-1',
+        }),
+      );
+      expect(mockRagService.buildEmbeddings).toHaveBeenCalledWith({
+        documents: [expect.objectContaining({ id: 1 })],
+      });
     });
 
     // Given: 여러 파일이 업로드될 때
@@ -66,9 +72,12 @@ describe('WorklogService', () => {
         { filename: 'file1.md', content: 'Content 1' },
         { filename: 'file2.md', content: 'Content 2' },
       ];
+      (mockWorklogRepo.saveWorklog as jest.Mock)
+        .mockResolvedValueOnce(1)
+        .mockResolvedValueOnce(2);
 
       // When
-      const result = await service.uploadFiles({ files });
+      const result = await service.uploadFiles({ files, user_id: 'user-1' });
 
       // Then
       expect(result.successCount).toBe(2);
@@ -86,13 +95,14 @@ describe('WorklogService', () => {
         content: 'Content',
       };
 
-      (mockRagService.buildEmbeddings as jest.Mock).mockRejectedValueOnce(
-        new Error('Embedding failed'),
+      (mockWorklogRepo.saveWorklog as jest.Mock).mockRejectedValueOnce(
+        new Error('Save failed'),
       );
 
       // When
       const result = await service.uploadFiles({
         files: [mockFile],
+        user_id: 'user-1',
       });
 
       // Then
@@ -100,7 +110,7 @@ describe('WorklogService', () => {
       expect(result.failedCount).toBe(1);
       expect(result.failedFiles).toHaveLength(1);
       expect(result.failedFiles[0].filename).toBe('error.md');
-      expect(result.failedFiles[0].error).toBe('Embedding failed');
+      expect(result.failedFiles[0].error).toBe('Save failed');
     });
 
     // Given: 진행현황 콜백이 제공될 때
@@ -116,7 +126,10 @@ describe('WorklogService', () => {
       const progressCallback = jest.fn();
 
       // When
-      await service.uploadFiles({ files: [mockFile] }, progressCallback);
+      await service.uploadFiles(
+        { files: [mockFile], user_id: 'user-1' },
+        progressCallback,
+      );
 
       // Then
       expect(progressCallback).toHaveBeenCalled();
@@ -140,7 +153,7 @@ describe('WorklogService', () => {
       ];
 
       // When
-      const result = await service.uploadFiles({ files });
+      const result = await service.uploadFiles({ files, user_id: 'user-1' });
 
       // Then
       expect(result.successCount).toBe(1);
@@ -163,7 +176,10 @@ describe('WorklogService', () => {
       };
 
       // When
-      const result = await service.uploadFiles({ files: [mockFile] });
+      const result = await service.uploadFiles({
+        files: [mockFile],
+        user_id: 'user-1',
+      });
 
       // Then
       expect(result.successCount).toBe(1);
@@ -183,7 +199,7 @@ describe('WorklogService', () => {
       };
 
       // When
-      await service.uploadFiles({ files: [mockFile] });
+      await service.uploadFiles({ files: [mockFile], user_id: 'user-1' });
 
       // Then
       const savedContent = (mockRagService.buildEmbeddings as jest.Mock).mock
@@ -203,12 +219,12 @@ describe('WorklogService', () => {
         { filename: 'success.md', content: 'Content 2' },
       ];
 
-      (mockRagService.buildEmbeddings as jest.Mock)
+      (mockWorklogRepo.saveWorklog as jest.Mock)
         .mockRejectedValueOnce(new Error('First file error'))
-        .mockResolvedValueOnce({ success: true });
+        .mockResolvedValueOnce(2);
 
       // When
-      const result = await service.uploadFiles({ files });
+      const result = await service.uploadFiles({ files, user_id: 'user-1' });
 
       // Then
       expect(result.successCount).toBe(1);

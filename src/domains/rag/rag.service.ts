@@ -54,13 +54,17 @@ export class RagService {
     let totalChunks = 0;
 
     for (const doc of input.documents) {
+      if (doc.id === undefined) {
+        throw new Error('Document id is required');
+      }
+
       await this.ragRepo.deleteByDocumentId(doc.id);
 
       const chunks = this.chunkByTokens(doc.content);
       const vectors = await this.openai.embedBatchSafe(chunks);
 
       const embeddings = chunks.map((content, i) => ({
-        document_id: doc.id,
+        document_id: doc.id!,
         chunk_index: i,
         content,
         vector: this.normalize(vectors[i]),

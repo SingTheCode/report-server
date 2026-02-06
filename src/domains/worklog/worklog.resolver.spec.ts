@@ -29,7 +29,7 @@ describe('WorklogResolver', () => {
     // Then: uploadId만 반환하고 처리는 비동기로 진행된다
     test('uploadId만 반환하고 처리는 비동기로 진행된다', () => {
       // Given
-      const mockInput = { files: [] };
+      const mockInput = { files: [], user_id: 'user-1' };
       const mockResult = {
         successCount: 2,
         failedCount: 0,
@@ -58,7 +58,7 @@ describe('WorklogResolver', () => {
     // Then: emitProgress로 결과를 전송한다
     test('비동기 처리 완료 시 emitProgress로 결과를 전송한다', async () => {
       // Given
-      const mockInput = { files: [] };
+      const mockInput = { files: [], user_id: 'user-1' };
       const mockResult = {
         successCount: 1,
         failedCount: 1,
@@ -99,6 +99,7 @@ describe('WorklogResolver', () => {
           { filename: 'file1.md', content: 'content1' },
           { filename: 'file2.md', content: 'content2' },
         ],
+        user_id: 'user-1',
       };
 
       (mockWorklogService.createProgressStream as jest.Mock).mockReturnValue(
