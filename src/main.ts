@@ -21,7 +21,7 @@ async function bootstrap() {
     origin: [
       'http://localhost:3000',
       'http://localhost:3001',
-      'https://job-clover.vercel.app',
+      'https://job-clover.singco.de',
     ],
     credentials: true,
   });
