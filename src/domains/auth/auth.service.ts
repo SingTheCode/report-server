@@ -3,25 +3,22 @@ import {
   BadRequestException,
   UnauthorizedException,
 } from '@nestjs/common';
-import {
-  SupabaseService,
-  TokenPayload,
-} from '../../infrastructure/supabase/supabase.service';
+import { AuthRepository, TokenPayload } from './auth.repository';
 import { LoginUrlOutput } from './dto/login-url.output';
 import { UserOutput } from './dto/user.output';
 
 @Injectable()
 export class AuthService {
-  constructor(private supabaseService: SupabaseService) {}
+  constructor(private authRepository: AuthRepository) {}
 
   async getGoogleLoginUrl(): Promise<LoginUrlOutput> {
-    const url = await this.supabaseService.getGoogleLoginUrl();
+    const url = await this.authRepository.getGoogleLoginUrl();
     return { url };
   }
 
   async handleCallback(code: string): Promise<TokenPayload> {
     if (!code) throw new BadRequestException('code is required');
-    return this.supabaseService.exchangeCodeForSession(code);
+    return this.authRepository.exchangeCodeForSession(code);
   }
 
   setTokens(accessToken: string, refreshToken: string): TokenPayload {
@@ -34,7 +31,7 @@ export class AuthService {
   async getMe(accessToken: string): Promise<UserOutput> {
     if (!accessToken) throw new UnauthorizedException();
 
-    const user = await this.supabaseService.getUserByToken(accessToken);
+    const user = await this.authRepository.getUserByToken(accessToken);
     if (!user) throw new UnauthorizedException();
 
     return { user };
@@ -42,6 +39,6 @@ export class AuthService {
 
   async refreshTokens(refreshToken: string): Promise<TokenPayload> {
     if (!refreshToken) throw new UnauthorizedException();
-    return this.supabaseService.refreshSession(refreshToken);
+    return this.authRepository.refreshSession(refreshToken);
   }
 }

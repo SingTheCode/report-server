@@ -1,21 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { SupabaseService } from './supabase.service';
+import { AuthRepository } from './auth.repository';
+import { SUPABASE_CLIENT } from '../../infrastructure/supabase/supabase.module';
 
-// Supabase 클라이언트 모킹
-jest.mock('@supabase/supabase-js', () => ({
-  createClient: jest.fn().mockImplementation(() => ({
-    auth: {
-      signInWithOAuth: jest.fn(),
-      exchangeCodeForSession: jest.fn(),
-      getUser: jest.fn(),
-      refreshSession: jest.fn(),
-    },
-  })),
-}));
-
-describe('SupabaseService', () => {
-  let service: SupabaseService;
+describe('AuthRepository', () => {
+  let repository: AuthRepository;
   let mockAuth: {
     signInWithOAuth: jest.Mock;
     exchangeCodeForSession: jest.Mock;
@@ -24,17 +13,26 @@ describe('SupabaseService', () => {
   };
 
   beforeEach(async () => {
+    mockAuth = {
+      signInWithOAuth: jest.fn(),
+      exchangeCodeForSession: jest.fn(),
+      getUser: jest.fn(),
+      refreshSession: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        SupabaseService,
+        AuthRepository,
+        {
+          provide: SUPABASE_CLIENT,
+          useValue: { auth: mockAuth },
+        },
         {
           provide: ConfigService,
           useValue: {
             get: jest.fn((key: string) => {
               const config: Record<string, string> = {
-                SUPABASE_URL: 'https://test.supabase.co',
-                SUPABASE_ANON_KEY: 'test-anon-key',
-                API_SERVER_DOMAIN: 'http://localhost:4000',
+                CLIENT_DOMAIN: 'http://localhost:8080',
               };
               return config[key];
             }),
@@ -43,12 +41,7 @@ describe('SupabaseService', () => {
       ],
     }).compile();
 
-    service = module.get<SupabaseService>(SupabaseService);
-    mockAuth = (
-      service as unknown as {
-        client: { auth: typeof mockAuth };
-      }
-    ).client.auth;
+    repository = module.get<AuthRepository>(AuthRepository);
   });
 
   describe('getGoogleLoginUrl', () => {
@@ -57,15 +50,14 @@ describe('SupabaseService', () => {
     // Then: Google OAuth URL을 반환한다
     test('Google OAuth URL을 반환한다', async () => {
       // Given
-      const mockUrl =
-        'https://test.supabase.co/auth/v1/authorize?provider=google';
+      const mockUrl = 'https://test.supabase.co/auth/v1/authorize?provider=google';
       mockAuth.signInWithOAuth.mockResolvedValue({
         data: { url: mockUrl },
         error: null,
       });
 
       // When
-      const url = await service.getGoogleLoginUrl();
+      const url = await repository.getGoogleLoginUrl();
 
       // Then
       expect(url).toBe(mockUrl);
@@ -88,7 +80,7 @@ describe('SupabaseService', () => {
       });
 
       // When & Then
-      await expect(service.getGoogleLoginUrl()).rejects.toThrow('OAuth error');
+      await expect(repository.getGoogleLoginUrl()).rejects.toThrow('OAuth error');
     });
   });
 
@@ -109,7 +101,7 @@ describe('SupabaseService', () => {
       });
 
       // When
-      const result = await service.exchangeCodeForSession('valid-code');
+      const result = await repository.exchangeCodeForSession('valid-code');
 
       // Then
       expect(result.accessToken).toBe('access-token');
@@ -127,7 +119,7 @@ describe('SupabaseService', () => {
       });
 
       // When & Then
-      await expect(service.exchangeCodeForSession('invalid')).rejects.toThrow(
+      await expect(repository.exchangeCodeForSession('invalid')).rejects.toThrow(
         'Invalid code',
       );
     });
@@ -154,7 +146,7 @@ describe('SupabaseService', () => {
       });
 
       // When
-      const user = await service.getUserByToken('valid-token');
+      const user = await repository.getUserByToken('valid-token');
 
       // Then
       expect(user).toEqual({
@@ -176,7 +168,7 @@ describe('SupabaseService', () => {
       });
 
       // When
-      const user = await service.getUserByToken('invalid-token');
+      const user = await repository.getUserByToken('invalid-token');
 
       // Then
       expect(user).toBeNull();
@@ -200,7 +192,7 @@ describe('SupabaseService', () => {
       });
 
       // When
-      const result = await service.refreshSession('valid-refresh-token');
+      const result = await repository.refreshSession('valid-refresh-token');
 
       // Then
       expect(result.accessToken).toBe('new-access-token');
@@ -218,7 +210,7 @@ describe('SupabaseService', () => {
       });
 
       // When & Then
-      await expect(service.refreshSession('invalid')).rejects.toThrow(
+      await expect(repository.refreshSession('invalid')).rejects.toThrow(
         'Invalid refresh token',
       );
     });

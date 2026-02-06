@@ -1,14 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { SupabaseService } from '../../infrastructure/supabase/supabase.service';
+import { AuthRepository } from './auth.repository';
 
 describe('AuthService', () => {
   let service: AuthService;
-  let mockSupabaseService: Partial<SupabaseService>;
+  let mockAuthRepository: Partial<AuthRepository>;
 
   beforeEach(async () => {
-    mockSupabaseService = {
+    mockAuthRepository = {
       getGoogleLoginUrl: jest
         .fn()
         .mockResolvedValue('https://google.com/oauth'),
@@ -29,7 +29,7 @@ describe('AuthService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
-        { provide: SupabaseService, useValue: mockSupabaseService },
+        { provide: AuthRepository, useValue: mockAuthRepository },
       ],
     }).compile();
 
@@ -46,7 +46,7 @@ describe('AuthService', () => {
 
       // Then
       expect(result.url).toBe('https://google.com/oauth');
-      expect(mockSupabaseService.getGoogleLoginUrl).toHaveBeenCalled();
+      expect(mockAuthRepository.getGoogleLoginUrl).toHaveBeenCalled();
     });
   });
 
@@ -100,7 +100,7 @@ describe('AuthService', () => {
     // Then: UnauthorizedException을 던진다
     test('유효하지 않은 토큰은 예외를 던진다', async () => {
       // Given
-      (mockSupabaseService.getUserByToken as jest.Mock).mockResolvedValue(null);
+      (mockAuthRepository.getUserByToken as jest.Mock).mockResolvedValue(null);
 
       // When & Then
       await expect(service.getMe('invalid-token')).rejects.toThrow(

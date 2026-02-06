@@ -1,29 +1,20 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { ConfigService } from '@nestjs/config';
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { SUPABASE_CLIENT } from '../../infrastructure/supabase/supabase.module';
+import { User } from './entities/auth.entity';
 
 export interface TokenPayload {
   accessToken: string;
   refreshToken: string;
 }
 
-export interface SupabaseUser {
-  id: string;
-  email: string;
-  name?: string;
-  avatarUrl?: string;
-}
-
 @Injectable()
-export class SupabaseService {
-  private client: SupabaseClient;
-
-  constructor(private configService: ConfigService) {
-    this.client = createClient(
-      this.configService.get('SUPABASE_URL')!,
-      this.configService.get('SUPABASE_ANON_KEY')!,
-    );
-  }
+export class AuthRepository {
+  constructor(
+    @Inject(SUPABASE_CLIENT) private client: SupabaseClient,
+    private configService: ConfigService,
+  ) {}
 
   async getGoogleLoginUrl(): Promise<string> {
     const { data, error } = await this.client.auth.signInWithOAuth({
@@ -49,7 +40,7 @@ export class SupabaseService {
     };
   }
 
-  async getUserByToken(accessToken: string): Promise<SupabaseUser | null> {
+  async getUserByToken(accessToken: string): Promise<User | null> {
     const {
       data: { user },
       error,
