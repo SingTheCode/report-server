@@ -63,7 +63,7 @@ describe('AuthController', () => {
       const result = await controller.callback('valid-code');
 
       // Then
-      expect(result.url).toBe('http://localhost:3000/');
+      expect(result.url).toBe('http://localhost:3000/chat');
       expect(result.cookies).toHaveLength(2);
       expect(result.cookies?.[0]).toEqual({
         name: 'sb_access_token',
