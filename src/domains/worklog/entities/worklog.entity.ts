@@ -3,7 +3,7 @@ import { Column, Entity, PrimaryColumn } from 'typeorm';
 @Entity('worklogs')
 export class Worklog {
   @PrimaryColumn()
-  id: string; // Notion 페이지 ID
+  id: string;
 
   @Column()
   title: string;
@@ -15,5 +15,8 @@ export class Worklog {
   url: string;
 
   @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
+  createdAt: Date;
+
+  @Column({ type: 'datetime', nullable: true })
   syncedAt: Date;
 }

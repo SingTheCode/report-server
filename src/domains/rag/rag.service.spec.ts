@@ -10,7 +10,6 @@ describe('RagService', () => {
 
   beforeEach(async () => {
     mockRagRepo = {
-      saveDocument: jest.fn(),
       saveEmbeddings: jest.fn(),
       deleteByDocumentId: jest.fn(),
       findAllEmbeddings: jest.fn(),
@@ -53,7 +52,6 @@ describe('RagService', () => {
       const result = await service.buildEmbeddings(input);
 
       // Then
-      expect(mockRagRepo.saveDocument).toHaveBeenCalled();
       expect(mockRagRepo.deleteByDocumentId).toHaveBeenCalledWith('doc1');
       expect(mockOpenAi.embedBatchSafe).toHaveBeenCalled();
       expect(mockRagRepo.saveEmbeddings).toHaveBeenCalled();
@@ -78,7 +76,7 @@ describe('RagService', () => {
 
       // Then
       expect(result.documentCount).toBe(2);
-      expect(mockRagRepo.saveDocument).toHaveBeenCalledTimes(2);
+      expect(mockRagRepo.deleteByDocumentId).toHaveBeenCalledTimes(2);
     });
   });
 

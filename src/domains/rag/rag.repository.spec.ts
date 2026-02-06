@@ -2,19 +2,13 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { RagRepository } from './rag.repository';
-import { Document } from './entities/document.entity';
 import { Embedding } from './entities/embedding.entity';
 
 describe('RagRepository', () => {
   let repository: RagRepository;
-  let mockDocRepo: Partial<Repository<Document>>;
   let mockEmbRepo: Partial<Repository<Embedding>>;
 
   beforeEach(async () => {
-    mockDocRepo = {
-      save: jest.fn(),
-      count: jest.fn(),
-    };
     mockEmbRepo = {
       save: jest.fn(),
       find: jest.fn(),
@@ -25,28 +19,11 @@ describe('RagRepository', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         RagRepository,
-        { provide: getRepositoryToken(Document), useValue: mockDocRepo },
         { provide: getRepositoryToken(Embedding), useValue: mockEmbRepo },
       ],
     }).compile();
 
     repository = module.get<RagRepository>(RagRepository);
-  });
-
-  describe('saveDocument', () => {
-    // Given: 문서 데이터가 주어졌을 때
-    // When: saveDocument를 호출하면
-    // Then: docRepo.save가 호출된다
-    test('문서를 저장한다', async () => {
-      // Given
-      const doc = { id: 'doc1', content: 'test content', title: 'test title' };
-
-      // When
-      await repository.saveDocument(doc);
-
-      // Then
-      expect(mockDocRepo.save).toHaveBeenCalledWith(doc);
-    });
   });
 
   describe('saveEmbeddings', () => {
@@ -101,19 +78,18 @@ describe('RagRepository', () => {
   });
 
   describe('getStatus', () => {
-    // Given: 문서와 임베딩이 저장되어 있을 때
+    // Given: 임베딩이 저장되어 있을 때
     // When: getStatus를 호출하면
-    // Then: 총 문서 수와 임베딩 수를 반환한다
+    // Then: 총 임베딩 수를 반환한다
     test('상태 정보를 반환한다', async () => {
       // Given
-      (mockDocRepo.count as jest.Mock).mockResolvedValue(5);
       (mockEmbRepo.count as jest.Mock).mockResolvedValue(15);
 
       // When
       const result = await repository.getStatus();
 
       // Then
-      expect(result).toEqual({ totalDocuments: 5, totalEmbeddings: 15 });
+      expect(result).toEqual({ totalEmbeddings: 15 });
     });
   });
 });

@@ -40,6 +40,28 @@ describe('WorklogRepository', () => {
       // Then
       expect(mockRepo.save).toHaveBeenCalledWith(worklog);
     });
+
+    // Given: createdAt이 포함된 worklog가 주어졌을 때
+    // When: saveWorklog를 호출하면
+    // Then: createdAt이 포함되어 저장된다
+    test('createdAt 필드를 포함하여 저장한다', async () => {
+      // Given
+      const createdAt = new Date('2026-01-01');
+      const worklog = {
+        id: 'page1',
+        title: 'Test',
+        content: 'content',
+        createdAt,
+      };
+
+      // When
+      await repository.saveWorklog(worklog);
+
+      // Then
+      expect(mockRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ createdAt }),
+      );
+    });
   });
 
   describe('saveWorklogs', () => {
