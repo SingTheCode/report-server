@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { WorklogResolver } from './worklog.resolver';
 import { WorklogService } from './worklog.service';
+import { AuthGuard } from '../../common/guards/auth.guard';
 
 describe('WorklogResolver', () => {
   let resolver: WorklogResolver;
@@ -18,7 +19,10 @@ describe('WorklogResolver', () => {
         WorklogResolver,
         { provide: WorklogService, useValue: mockWorklogService },
       ],
-    }).compile();
+    })
+      .overrideGuard(AuthGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     resolver = module.get<WorklogResolver>(WorklogResolver);
   });
@@ -26,10 +30,11 @@ describe('WorklogResolver', () => {
   describe('uploadWorklogs', () => {
     // Given: 파일이 업로드될 때
     // When: uploadWorklogs mutation을 호출하면
-    // Then: uploadId만 반환하고 처리는 비동기로 진행된다
-    test('uploadId만 반환하고 처리는 비동기로 진행된다', () => {
+    // Then: uploadId만 반환하고 user.id를 서비스에 전달한다
+    test('context에서 user.id를 추출하여 서비스에 전달한다', () => {
       // Given
-      const mockInput = { files: [], user_id: 'user-1' };
+      const mockInput = { files: [] };
+      const mockReq = { user: { id: 'user-123', email: 'test@test.com' } };
       const mockResult = {
         successCount: 2,
         failedCount: 0,
@@ -45,12 +50,15 @@ describe('WorklogResolver', () => {
       );
 
       // When
-      const result = resolver.uploadWorklogs(mockInput);
+      const result = resolver.uploadWorklogs(mockInput, mockReq);
 
       // Then
       expect(result.uploadId).toBe('upload-123');
-      expect(result).toEqual({ uploadId: 'upload-123' });
-      expect(mockWorklogService.createProgressStream).toHaveBeenCalled();
+      expect(mockWorklogService.uploadFiles).toHaveBeenCalledWith(
+        mockInput,
+        'user-123',
+        expect.any(Function),
+      );
     });
 
     // Given: 업로드 완료 시
@@ -58,7 +66,8 @@ describe('WorklogResolver', () => {
     // Then: emitProgress로 결과를 전송한다
     test('비동기 처리 완료 시 emitProgress로 결과를 전송한다', async () => {
       // Given
-      const mockInput = { files: [], user_id: 'user-1' };
+      const mockInput = { files: [] };
+      const mockReq = { user: { id: 'user-456', email: 'test@test.com' } };
       const mockResult = {
         successCount: 1,
         failedCount: 1,
@@ -74,7 +83,7 @@ describe('WorklogResolver', () => {
       );
 
       // When
-      resolver.uploadWorklogs(mockInput);
+      resolver.uploadWorklogs(mockInput, mockReq);
 
       // 비동기 처리 완료 대기
       await new Promise((resolve) => setTimeout(resolve, 10));
@@ -99,8 +108,8 @@ describe('WorklogResolver', () => {
           { filename: 'file1.md', content: 'content1' },
           { filename: 'file2.md', content: 'content2' },
         ],
-        user_id: 'user-1',
       };
+      const mockReq = { user: { id: 'user-789', email: 'test@test.com' } };
 
       (mockWorklogService.createProgressStream as jest.Mock).mockReturnValue(
         'upload-789',
@@ -110,7 +119,7 @@ describe('WorklogResolver', () => {
       );
 
       // When
-      resolver.uploadWorklogs(mockInput);
+      resolver.uploadWorklogs(mockInput, mockReq);
 
       // 비동기 처리 완료 대기
       await new Promise((resolve) => setTimeout(resolve, 10));

@@ -4,6 +4,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { GqlExecutionContext } from '@nestjs/graphql';
 import { AuthService } from '../../domains/auth/auth.service';
 
 @Injectable()
@@ -11,11 +12,23 @@ export class AuthGuard implements CanActivate {
   constructor(private authService: AuthService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
-    const response = context.switchToHttp().getResponse();
+    // GraphQL과 HTTP 모두 지원
+    let request;
+    let response;
 
-    const accessToken = request.cookies['sb_access_token'];
-    const refreshToken = request.cookies['sb_refresh_token'];
+    if (context.getType() === 'http') {
+      request = context.switchToHttp().getRequest();
+      response = context.switchToHttp().getResponse();
+    } else {
+      const gqlContext = GqlExecutionContext.create(context);
+      request = gqlContext.getContext().req;
+      response = request?.res;
+    }
+
+    if (!request) throw new UnauthorizedException();
+
+    const accessToken = request.cookies?.['sb_access_token'];
+    const refreshToken = request.cookies?.['sb_refresh_token'];
 
     // access token으로 사용자 조회 시도
     try {
@@ -29,11 +42,11 @@ export class AuthGuard implements CanActivate {
       const tokens = await this.authService.refreshTokens(refreshToken);
 
       // 새 토큰을 쿠키에 설정
-      response.cookie('sb_access_token', tokens.accessToken, {
+      response?.cookie?.('sb_access_token', tokens.accessToken, {
         httpOnly: true,
         maxAge: 3600 * 1000,
       });
-      response.cookie('sb_refresh_token', tokens.refreshToken, {
+      response?.cookie?.('sb_refresh_token', tokens.refreshToken, {
         httpOnly: true,
         maxAge: 30 * 24 * 3600 * 1000,
       });

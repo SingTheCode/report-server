@@ -20,8 +20,4 @@ export class UploadWorklogsInput {
   @ValidateNested({ each: true })
   @Type(() => WorklogFileInput)
   files: WorklogFileInput[];
-
-  @Field()
-  @IsString()
-  user_id: string;
 }

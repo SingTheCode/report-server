@@ -2,6 +2,12 @@ import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from './auth.guard';
 import { AuthService } from '../../domains/auth/auth.service';
 
+jest.mock('@nestjs/graphql', () => ({
+  GqlExecutionContext: {
+    create: jest.fn(),
+  },
+}));
+
 describe('AuthGuard', () => {
   let guard: AuthGuard;
   let authService: jest.Mocked<AuthService>;
@@ -19,6 +25,7 @@ describe('AuthGuard', () => {
     mockResponse = { cookie: jest.fn() };
 
     mockContext = {
+      getType: () => 'http',
       switchToHttp: () => ({
         getRequest: () => mockRequest,
         getResponse: () => mockResponse,
@@ -28,7 +35,7 @@ describe('AuthGuard', () => {
     guard = new AuthGuard(authService);
   });
 
-  describe('canActivate', () => {
+  describe('canActivate - HTTP', () => {
     test('access token이 유효하면 통과한다', async () => {
       // Given
       mockRequest.cookies = { sb_access_token: 'valid-token' };
@@ -97,6 +104,65 @@ describe('AuthGuard', () => {
       await expect(guard.canActivate(mockContext)).rejects.toThrow(
         UnauthorizedException,
       );
+    });
+  });
+
+  describe('canActivate - GraphQL', () => {
+    test('GraphQL context에서 req가 undefined이면 UnauthorizedException을 던진다', async () => {
+      // Given: GraphQL context에서 req가 undefined인 경우
+      const gqlContext = {
+        getType: () => 'graphql',
+        switchToHttp: () => ({
+          getRequest: () => undefined,
+          getResponse: () => undefined,
+        }),
+      } as unknown as ExecutionContext;
+
+      const { GqlExecutionContext } = jest.requireMock('@nestjs/graphql');
+      GqlExecutionContext.create = jest.fn().mockReturnValue({
+        getContext: () => ({ req: undefined }),
+      });
+
+      // When & Then: UnauthorizedException이 발생해야 한다
+      await expect(guard.canActivate(gqlContext)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    // Given: GraphQL context에서 요청이 올 때
+    // When: canActivate를 호출하면
+    // Then: GqlExecutionContext에서 request를 가져와 인증한다
+    test('GraphQL context에서 access token이 유효하면 통과한다', async () => {
+      // Given
+      mockRequest.cookies = { sb_access_token: 'valid-token' };
+      const gqlContext = {
+        getType: () => 'graphql',
+        getArgs: () => [],
+        getClass: () => ({}),
+        getHandler: () => ({}),
+        getArgByIndex: () => ({}),
+        switchToHttp: () => ({
+          getRequest: () => undefined,
+          getResponse: () => undefined,
+        }),
+        switchToRpc: () => ({}),
+        switchToWs: () => ({}),
+      } as unknown as ExecutionContext;
+
+      // GqlExecutionContext.create를 mock
+      const { GqlExecutionContext } = jest.requireMock('@nestjs/graphql');
+      GqlExecutionContext.create = jest.fn().mockReturnValue({
+        getContext: () => ({ req: mockRequest }),
+      });
+
+      authService.getMe.mockResolvedValue({ user: { id: '1', email: 'test@test.com' } });
+
+      // When
+      const result = await guard.canActivate(gqlContext);
+
+      // Then
+      expect(result).toBe(true);
+      expect(mockRequest.user).toEqual({ id: '1', email: 'test@test.com' });
     });
   });
 });

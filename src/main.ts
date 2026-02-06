@@ -1,11 +1,15 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { json, urlencoded } from 'express';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { GraphqlExceptionFilter } from './common/filters/graphql-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // 쿠키 파서
+  app.use(cookieParser());
 
   // Body parser 크기 제한 증가 (대용량 GraphQL 요청 처리)
   app.use(json({ limit: '50mb' }));

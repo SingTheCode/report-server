@@ -27,6 +27,7 @@ export class WorklogService {
 
   async uploadFiles(
     input: UploadWorklogsInput,
+    userId: string,
     onProgress?: (progress: UploadProgressOutput) => void,
   ): Promise<UploadResultOutput> {
     const files = input.files;
@@ -62,7 +63,7 @@ export class WorklogService {
         const worklogId = await this.worklogRepo.saveWorklog({
           title: file.filename,
           content,
-          user_id: input.user_id,
+          user_id: userId,
           synced_at: new Date().toISOString(),
         });
 

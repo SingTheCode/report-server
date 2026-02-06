@@ -21,6 +21,7 @@ import { AuthModule } from './domains/auth/auth.module';
       autoSchemaFile: join(process.cwd(), 'schema.gql'),
       playground: process.env.NODE_ENV !== 'production',
       introspection: process.env.NODE_ENV !== 'production',
+      context: ({ req, res }) => ({ req, res }),
     }),
 
     // Infrastructure

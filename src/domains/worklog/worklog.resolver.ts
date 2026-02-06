@@ -1,4 +1,4 @@
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Args, Context, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { WorklogService } from './worklog.service';
 import { UploadWorklogsInput } from './dto/input/upload-worklogs.input';
 import {
@@ -6,6 +6,8 @@ import {
   UploadProgressOutput,
 } from './dto/output/upload-worklogs.output';
 import { ObjectType, Field } from '@nestjs/graphql';
+import { UseGuards } from '@nestjs/common';
+import { AuthGuard } from '../../common/guards/auth.guard';
 
 @ObjectType()
 class HealthOutput {
@@ -23,8 +25,10 @@ export class WorklogResolver {
   }
 
   @Mutation(() => UploadWorklogsOutput)
+  @UseGuards(AuthGuard)
   uploadWorklogs(
     @Args('input') input: UploadWorklogsInput,
+    @Context('req') req: { user: { id: string } },
   ): UploadWorklogsOutput {
     const uploadId = this.worklogService.createProgressStream();
 
@@ -34,7 +38,7 @@ export class WorklogResolver {
 
     // 비동기로 처리 (await 하지 않음)
     void this.worklogService
-      .uploadFiles(input, onProgress)
+      .uploadFiles(input, req.user.id, onProgress)
       .then((result) => {
         this.worklogService.emitProgress(uploadId, {
           totalFiles: result.successCount + result.failedCount,

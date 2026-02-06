@@ -5,9 +5,10 @@ import { WorklogService } from './worklog.service';
 import { WorklogRepository } from './worklog.repository';
 import { WorklogController } from './worklog.controller';
 import { RagModule } from '../rag/rag.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [SupabaseModule, RagModule],
+  imports: [SupabaseModule, RagModule, AuthModule],
   controllers: [WorklogController],
   providers: [WorklogResolver, WorklogService, WorklogRepository],
   exports: [WorklogRepository],

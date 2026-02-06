@@ -41,14 +41,10 @@ describe('WorklogService', () => {
       const mockFile = {
         filename: 'test.md',
         content: '# Test Content\nThis is test content.',
-        user_id: 'user-1',
       };
 
       // When
-      const result = await service.uploadFiles({
-        files: [mockFile],
-        user_id: 'user-1',
-      });
+      const result = await service.uploadFiles({ files: [mockFile] }, 'user-1');
 
       // Then
       expect(result.successCount).toBe(1);
@@ -77,7 +73,7 @@ describe('WorklogService', () => {
         .mockResolvedValueOnce(2);
 
       // When
-      const result = await service.uploadFiles({ files, user_id: 'user-1' });
+      const result = await service.uploadFiles({ files }, 'user-1');
 
       // Then
       expect(result.successCount).toBe(2);
@@ -100,10 +96,7 @@ describe('WorklogService', () => {
       );
 
       // When
-      const result = await service.uploadFiles({
-        files: [mockFile],
-        user_id: 'user-1',
-      });
+      const result = await service.uploadFiles({ files: [mockFile] }, 'user-1');
 
       // Then
       expect(result.successCount).toBe(0);
@@ -126,10 +119,7 @@ describe('WorklogService', () => {
       const progressCallback = jest.fn();
 
       // When
-      await service.uploadFiles(
-        { files: [mockFile], user_id: 'user-1' },
-        progressCallback,
-      );
+      await service.uploadFiles({ files: [mockFile] }, 'user-1', progressCallback);
 
       // Then
       expect(progressCallback).toHaveBeenCalled();
@@ -153,7 +143,7 @@ describe('WorklogService', () => {
       ];
 
       // When
-      const result = await service.uploadFiles({ files, user_id: 'user-1' });
+      const result = await service.uploadFiles({ files }, 'user-1');
 
       // Then
       expect(result.successCount).toBe(1);
@@ -176,10 +166,7 @@ describe('WorklogService', () => {
       };
 
       // When
-      const result = await service.uploadFiles({
-        files: [mockFile],
-        user_id: 'user-1',
-      });
+      const result = await service.uploadFiles({ files: [mockFile] }, 'user-1');
 
       // Then
       expect(result.successCount).toBe(1);
@@ -199,7 +186,7 @@ describe('WorklogService', () => {
       };
 
       // When
-      await service.uploadFiles({ files: [mockFile], user_id: 'user-1' });
+      await service.uploadFiles({ files: [mockFile] }, 'user-1');
 
       // Then
       const savedContent = (mockRagService.buildEmbeddings as jest.Mock).mock
@@ -224,7 +211,7 @@ describe('WorklogService', () => {
         .mockResolvedValueOnce(2);
 
       // When
-      const result = await service.uploadFiles({ files, user_id: 'user-1' });
+      const result = await service.uploadFiles({ files }, 'user-1');
 
       // Then
       expect(result.successCount).toBe(1);
